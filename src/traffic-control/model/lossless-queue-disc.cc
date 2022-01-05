@@ -1,0 +1,173 @@
+/* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
+/*
+ * Copyright (c) 2017 Universita' degli Studi di Napoli Federico II
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
+ * published by the Free Software Foundation;
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * Authors:  Stefano Avallone <stavallo@unina.it>
+ */
+
+#include "ns3/log.h"
+#include "lossless-queue-disc.h"
+#include "ns3/object-factory.h"
+#include "ns3/drop-tail-queue.h"
+
+namespace ns3 {
+
+NS_LOG_COMPONENT_DEFINE ("LosslessQueueDisc");
+
+NS_OBJECT_ENSURE_REGISTERED (LosslessQueueDisc);
+
+TypeId LosslessQueueDisc::GetTypeId (void)
+{
+  static TypeId tid = TypeId ("ns3::LosslessQueueDisc")
+    .SetParent<QueueDisc> ()
+    .SetGroupName ("TrafficControl")
+    .AddConstructor<LosslessQueueDisc> ()
+    .AddAttribute ("MaxSize",
+                   "The max queue size. After this number is exceeded, all device MAC addresses are marked as 'off' in the 'global-onoff-info', and neighbours should stop sending to this node. However, packets that arrive after MaxSize is exceeded (due to delay or other reasons) will still be enqueued.",
+                   QueueSizeValue (QueueSize ("1000p")),
+                   MakeQueueSizeAccessor (&QueueDisc::SetMaxSize,
+                                          &QueueDisc::GetMaxSize),
+                   MakeQueueSizeChecker ())
+  ;
+  return tid;
+}
+
+LosslessQueueDisc::LosslessQueueDisc ()
+  : QueueDisc (QueueDiscSizePolicy::SINGLE_INTERNAL_QUEUE)
+{ // 除了SINGLE_INTERNAL_QUEUE（FIFO用的是这个），也许可以考虑试试别的？
+  NS_LOG_FUNCTION (this);
+}
+
+LosslessQueueDisc::~LosslessQueueDisc ()
+{
+  NS_LOG_FUNCTION (this);
+}
+
+bool
+LosslessQueueDisc::DoEnqueue (Ptr<QueueDiscItem> item)
+{
+  NS_LOG_FUNCTION (this << item);
+
+  if (GetCurrentSize () + item > GetMaxSize ())
+    {
+        //TODO: 标记全局表中它的device为off。
+    }
+
+  bool retval = GetInternalQueue (0)->Enqueue (item);
+
+  // If Queue::Enqueue fails, QueueDisc::DropBeforeEnqueue is called by the
+  // internal queue because QueueDisc::AddInternalQueue sets the trace callback
+
+  NS_LOG_LOGIC ("Number packets " << GetInternalQueue (0)->GetNPackets ());
+  NS_LOG_LOGIC ("Number bytes " << GetInternalQueue (0)->GetNBytes ());
+
+  return retval;
+}
+
+Ptr<QueueDiscItem>
+LosslessQueueDisc::DoDequeue (void)
+{
+  NS_LOG_FUNCTION (this);
+
+  // See the next packet in the queue.
+  Ptr<const QueueDiscItem> item = GetInternalQueue (0)->Peek ();
+  if (!item)
+    {
+        NS_LOG_LOGIC ("Queue empty");
+        return 0;
+    }
+
+    //Address destMAC = item->GetAddress();
+    bool destOff = 0; 
+    /**
+     * TODO: 根据destMAC查询全局onoff表，给destOff赋值。
+     * 
+     */
+    if (destOff) {
+        NS_LOG_LOGIC ("The queue front is blocked by an OFF destination.");
+        /* TODO: 在对象里记录下当前队列的长度k。 */
+        return 0;
+        // 外部可能会因为这里返回0而认为队列空了，从而停止run。如果发现了类似的bug，要记得往这方面想（并且打补丁）。
+    }
+
+  Ptr<QueueDiscItem> realitem = GetInternalQueue (0)->Dequeue (); // not const
+  if (blockedCnt > 0){
+      /**
+       * TODO: 给realitem打上TCD标记。
+       * 
+       */
+      blockedCnt--;
+  }
+
+  return realitem;
+}
+
+Ptr<const QueueDiscItem>
+LosslessQueueDisc::DoPeek (void)
+{
+  NS_LOG_FUNCTION (this);
+
+  Ptr<const QueueDiscItem> item = GetInternalQueue (0)->Peek ();
+
+  if (!item)
+    {
+      NS_LOG_LOGIC ("Queue empty");
+      return 0;
+    }
+
+  return item;
+}
+
+bool
+LosslessQueueDisc::CheckConfig (void)
+{
+  NS_LOG_FUNCTION (this);
+  if (GetNQueueDiscClasses () > 0)
+    {
+      NS_LOG_ERROR ("LosslessQueueDisc cannot have classes");
+      return false;
+    }
+
+  if (GetNPacketFilters () > 0)
+    {
+      NS_LOG_ERROR ("LosslessQueueDisc needs no packet filter");
+      return false;
+    }
+
+  if (GetNInternalQueues () == 0)
+    {
+      // add a DropTail queue
+      AddInternalQueue (CreateObjectWithAttributes<DropTailQueue<QueueDiscItem> >
+                          ("MaxSize", QueueSizeValue (GetMaxSize ())));
+    }
+
+  if (GetNInternalQueues () != 1)
+    {
+      NS_LOG_ERROR ("LosslessQueueDisc needs 1 internal queue");
+      return false;
+    }
+
+  return true;
+}
+
+void
+LosslessQueueDisc::InitializeParams (void)
+{
+  NS_LOG_FUNCTION (this);
+  blockedCnt = 0;
+}
+
+} // namespace ns3
