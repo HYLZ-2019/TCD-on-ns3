@@ -26,6 +26,7 @@
 #include "ns3/queue-disc.h"
 #include <tuple>
 
+
 namespace ns3 {
 
 NS_LOG_COMPONENT_DEFINE ("TrafficControlLayer");
@@ -126,6 +127,8 @@ TrafficControlLayer::ScanDevices (void)
       Ptr<NetDevice> dev = m_node->GetDevice (i);
       NS_LOG_DEBUG ("Checking device " << i << " with pointer " << dev << " of type " << dev->GetInstanceTypeId ().GetName ());
 
+      
+
       // note: there may be no NetDeviceQueueInterface aggregated to the device
       Ptr<NetDeviceQueueInterface> ndqi = dev->GetObject<NetDeviceQueueInterface> ();
       NS_LOG_DEBUG ("Pointer to NetDeviceQueueInterface: " << ndqi);
@@ -179,11 +182,15 @@ TrafficControlLayer::ScanDevices (void)
 
                   ndqi->GetTxQueue (i)->SetWakeCallback (MakeCallback (&QueueDisc::Run, qd));
                   ndi->second.m_queueDiscsToWake.push_back (qd);
+
+                  qd -> addRelatedDeviceAddress(dev -> GetAddress());
                 }
             }
           else
             {
               ndi->second.m_queueDiscsToWake.push_back (ndi->second.m_rootQueueDisc);
+              
+              (ndi->second.m_rootQueueDisc) -> addRelatedDeviceAddress(dev -> GetAddress());
             }
 
           // set the NetDeviceQueueInterface object and the SendCallback on the queue discs
