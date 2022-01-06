@@ -23,6 +23,9 @@
 #include "ns3/object-factory.h"
 #include "ns3/drop-tail-queue.h"
 
+const int lower_bound = 10;
+const int upper_bound = 20;
+
 namespace ns3 {
 
 NS_LOG_COMPONENT_DEFINE ("LosslessQueueDisc");
@@ -61,6 +64,11 @@ LosslessQueueDisc::DoEnqueue (Ptr<QueueDiscItem> item)
 {
   NS_LOG_FUNCTION (this << item);
 
+  if (GetCurrentSize () + item > upper_bound ())
+    {
+        //TODO: 标记全局表中它的device为off。
+    }
+
   if (GetCurrentSize () + item > GetMaxSize ())
     {
         //TODO: 标记全局表中它的device为off。
@@ -90,17 +98,20 @@ LosslessQueueDisc::DoDequeue (void)
         return 0;
     }
 
-    //Address destMAC = item->GetAddress();
-    bool destOff = 0; 
-    /**
-     * TODO: 根据destMAC查询全局onoff表，给destOff赋值。
-     * 
-     */
+    Address destMAC = item -> GetAddress();
+    bool destOff = !getValue(destMAC); 
+    
     if (destOff) {
         NS_LOG_LOGIC ("The queue front is blocked by an OFF destination.");
+        /* TODO: 把“this因为destOff而停住了”记录在全局表里，以便onoff表变on的时候，可以重新run这个queue。 */
+        blockQueueAdding(destMAC, *this);
         /* TODO: 在对象里记录下当前队列的长度k。 */
         return 0;
         // 外部可能会因为这里返回0而认为队列空了，从而停止run。如果发现了类似的bug，要记得往这方面想（并且打补丁）。
+    }
+
+    if (GetCurrentSize() <= lower_bound) {
+      /*TODO: 找到这个node上所有的device, 标记 怀疑不应该在这里搞*/
     }
 
   Ptr<QueueDiscItem> realitem = GetInternalQueue (0)->Dequeue (); // not const
