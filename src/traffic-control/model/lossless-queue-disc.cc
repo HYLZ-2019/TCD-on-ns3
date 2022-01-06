@@ -71,13 +71,15 @@ LosslessQueueDisc::DoEnqueue (Ptr<QueueDiscItem> item)
 {
   NS_LOG_FUNCTION (this << item);
 
+  bool retval = GetInternalQueue (0)->Enqueue (item);
 
-  if (GetCurrentSize () + item > qlenUpperBound)
+  if (GetCurrentSize () > qlenUpperBound)
     {
         //TODO: 标记全局表中它的device为off。
+      std :: set <Address> :: iterator it = mda.begin();
+      for (; it != mda.end(); ++it) 
+        onoffTable.setValue(*it, false); 
     }
-
-  bool retval = GetInternalQueue (0)->Enqueue (item);
 
   // If Queue::Enqueue fails, QueueDisc::DropBeforeEnqueue is called by the
   // internal queue because QueueDisc::AddInternalQueue sets the trace callback
@@ -113,11 +115,15 @@ LosslessQueueDisc::DoDequeue (void)
         // 外部可能会因为这里返回0而认为队列空了，从而停止run。如果发现了类似的bug，要记得往这方面想（并且打补丁）。
     }
 
-    if (GetCurrentSize() <= qlenLowerBound) {
-      /*TODO: 找到这个node上所有的device, 标记 怀疑不应该在这里搞*/
-    }
-
   Ptr<QueueDiscItem> realitem = GetInternalQueue (0)->Dequeue (); // not const
+
+  if (GetCurrentSize() <= qlenLowerBound) {
+    /*TODO: 找到这个node上所有的device, 标记ON*/
+    std :: set <Address> :: iterator it = mda.begin();
+    for (; it != mda.end(); ++it) 
+      onoffTable.setValue(*it, true); 
+  }
+
   if (blockedCnt > 0){
       /**
        * TODO: 给realitem打上TCD标记。
