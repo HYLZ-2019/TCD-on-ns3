@@ -22,6 +22,7 @@
 #define FIFO_QUEUE_DISC_H
 
 #include "ns3/queue-disc.h"
+#include "lossless-onoff-table.h"
 
 namespace ns3 {
 
@@ -43,6 +44,8 @@ public:
    *
    * Creates a queue with a depth of 1000 packets by default
    */
+  LosslessQueueDisc (LosslessOnoffTable _onofftable);
+
   LosslessQueueDisc ();
 
   virtual ~LosslessQueueDisc();
@@ -52,6 +55,9 @@ public:
    * 
    */
   int blockedCnt;
+  LosslessOnoffTable onoffTable;
+  QueueSize qlenLowerBound = QueueSize("50p");
+  QueueSize qlenUpperBound = QueueSize("100p");
 
 private:
   virtual bool DoEnqueue (Ptr<QueueDiscItem> item);
