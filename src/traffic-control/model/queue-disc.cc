@@ -27,6 +27,7 @@
 #include "ns3/unused.h"
 #include "ns3/simulator.h"
 #include "queue-disc.h"
+#include "lossless-onoff-table.h"
 #include "ns3/net-device-queue-interface.h"
 #include "ns3/queue.h"
 
@@ -1130,7 +1131,7 @@ QueueDisc::Transmit (Ptr<QueueDiscItem> item)
 }
 
 void QueueDisc::bindLosslessOnoffTable(LosslessOnoffTable* table){
-  onoffTable = table;
+  onoffTable = *table;
 }
 
 } // namespace ns3

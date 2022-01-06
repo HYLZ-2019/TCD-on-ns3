@@ -1,9 +1,15 @@
+#ifndef LOSSLESS_ONOFF_TABLE_H
+#define LOSSLESS_ONOFF_TABLE_H
+
 #include <vector>
 #include <map>
 #include <ns3/address.h>
-#include <ns3/queue-disc.h>
 #include <semaphore.h>
 namespace ns3 {
+
+// a declare of QueueDisc to cope with mutual inclusion
+class QueueDisc;
+
 /**
  * @brief A table recording on/off information of all nodes in a network, used for implementing a lossless network.
  * A single LosslessOnoffTable is used for an entire lossless network.
@@ -30,3 +36,5 @@ private:
 };
 
 } // namespace ns3
+
+#endif // LOSSLESS_ONOFF_TABLE_H

@@ -250,7 +250,7 @@ int main (int argc, char *argv[])
   tch.SetRootQueueDisc (qdiscTypeId);
   QueueDiscContainer qd;
   tch.Uninstall (routers.Get (0)->GetDevice (0));
-  qd.Add (tch.Install (routers.Get (0)->GetDevice (0)).Get (0), globalOnoffTable);
+  qd.Add (tch.Install (routers.Get (0)->GetDevice (0), globalOnoffTable).Get (0));
 
   // Enable BQL
   tch.SetQueueLimits ("ns3::DynamicQueueLimits");

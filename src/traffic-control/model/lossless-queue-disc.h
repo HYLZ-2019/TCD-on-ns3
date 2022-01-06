@@ -18,8 +18,8 @@
  * Authors:  Stefano Avallone <stavallo@unina.it>
  */
 
-#ifndef FIFO_QUEUE_DISC_H
-#define FIFO_QUEUE_DISC_H
+#ifndef LOSSLESS_QUEUE_DISC_H
+#define LOSSLESS_QUEUE_DISC_H
 
 #include "ns3/queue-disc.h"
 #include "lossless-onoff-table.h"
@@ -68,4 +68,4 @@ private:
 
 } // namespace ns3
 
-#endif /* FIFO_QUEUE_DISC_H */
+#endif /* LOSSLESS_QUEUE_DISC_H */

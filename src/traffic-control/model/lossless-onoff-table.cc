@@ -1,4 +1,5 @@
 #include "lossless-onoff-table.h"
+#include "queue-disc.h"
 
 namespace ns3 {
 

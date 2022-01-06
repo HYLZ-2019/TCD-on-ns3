@@ -527,7 +527,7 @@ public:
 
   /** This is only used by "LosslessQueueDisc"s. The reason why this property is defined in the base class is because the programmer is stupid. */
   LosslessOnoffTable onoffTable;
-  void bindLosslessOnoffTable(LosslessOnoffTable table);
+  void bindLosslessOnoffTable(LosslessOnoffTable* table);
 
 protected:
   /**
