@@ -256,6 +256,8 @@ public:
    */
   QueueDiscContainer Install (NetDeviceContainer c);
 
+  QueueDiscContainer Install (Ptr<NetDevice> d, LosslessOnoffTable* table);
+
   /**
    * \param d device
    * \returns a QueueDisc container with the root queue disc installed on the device

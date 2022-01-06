@@ -1129,4 +1129,8 @@ QueueDisc::Transmit (Ptr<QueueDiscItem> item)
   return true;
 }
 
+void QueueDisc::bindLosslessOnoffTable(LosslessOnoffTable* table){
+  onoffTable = table;
+}
+
 } // namespace ns3

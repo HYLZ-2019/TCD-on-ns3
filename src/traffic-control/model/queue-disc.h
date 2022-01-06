@@ -31,6 +31,7 @@
 #include <string>
 #include "packet-filter.h"
 #include "ns3/address.h"
+#include "lossless-onoff-table.h"
 
 namespace ns3 {
 
@@ -523,6 +524,10 @@ public:
   static constexpr const char* INTERNAL_QUEUE_DROP = "Dropped by internal queue";    //!< Packet dropped by an internal queue
   static constexpr const char* CHILD_QUEUE_DISC_DROP = "(Dropped by child queue disc) "; //!< Packet dropped by a child queue disc
   static constexpr const char* CHILD_QUEUE_DISC_MARK = "(Marked by child queue disc) "; //!< Packet marked by a child queue disc
+
+  /** This is only used by "LosslessQueueDisc"s. The reason why this property is defined in the base class is because the programmer is stupid. */
+  LosslessOnoffTable onoffTable;
+  void bindLosslessOnoffTable(LosslessOnoffTable table);
 
 protected:
   /**

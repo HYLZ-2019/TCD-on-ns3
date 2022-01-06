@@ -245,6 +245,52 @@ TrafficControlHelper::Install (Ptr<NetDevice> d)
 }
 
 QueueDiscContainer
+TrafficControlHelper::Install (Ptr<NetDevice> d, LosslessOnoffTable* onoffTable)
+{
+  QueueDiscContainer container;
+
+  // A TrafficControlLayer object is aggregated by the InternetStackHelper, but check
+  // anyway because a queue disc has no effect without a TrafficControlLayer object
+  Ptr<TrafficControlLayer> tc = d->GetNode ()->GetObject<TrafficControlLayer> ();
+  NS_ASSERT (tc != 0);
+
+  // Start from an empty vector of queue discs
+  m_queueDiscs.clear ();
+  m_queueDiscs.resize (m_queueDiscFactory.size ());
+
+  // Create queue discs (from leaves to root)
+  for (auto i = m_queueDiscFactory.size (); i-- > 0; )
+    {
+      m_queueDiscs[i] = m_queueDiscFactory[i].CreateQueueDisc (m_queueDiscs);
+      m_queueDiscs[i]->bindLosslessOnoffTable(onoffTable);
+    }
+
+  // Set the root queue disc (if any has been created) on the device
+  if (!m_queueDiscs.empty () && m_queueDiscs[0])
+    {
+      tc->SetRootQueueDiscOnDevice (d, m_queueDiscs[0]);
+      container.Add (m_queueDiscs[0]);
+    }
+
+  // Queue limits objects can only be installed if a netdevice queue interface
+  // has been aggregated to the netdevice. This is normally the case if the
+  // netdevice has been created via helpers. Abort the simulation if not.
+  if (m_queueLimitsFactory.GetTypeId ().GetUid ())
+    {
+      Ptr<NetDeviceQueueInterface> ndqi = d->GetObject<NetDeviceQueueInterface> ();
+      NS_ABORT_MSG_IF (!ndqi, "A NetDeviceQueueInterface object has not been"
+                              "aggregated to the NetDevice");
+      for (uint8_t i = 0; i < ndqi->GetNTxQueues (); i++)
+        {
+          Ptr<QueueLimits> ql = m_queueLimitsFactory.Create<QueueLimits> ();
+          ndqi->GetTxQueue (i)->SetQueueLimits (ql);
+        }
+    }
+
+  return container;
+}
+
+QueueDiscContainer
 TrafficControlHelper::Install (NetDeviceContainer c)
 {
   QueueDiscContainer container;

@@ -189,6 +189,5 @@ LosslessQueueDisc::InitializeParams (void)
 {
   NS_LOG_FUNCTION (this);
   blockedCnt = 0;
-}
 
 } // namespace ns3

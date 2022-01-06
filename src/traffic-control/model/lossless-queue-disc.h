@@ -55,7 +55,7 @@ public:
    * 
    */
   int blockedCnt;
-  LosslessOnoffTable onoffTable;
+  
   QueueSize qlenLowerBound = QueueSize("50p");
   QueueSize qlenUpperBound = QueueSize("80p");
 private:

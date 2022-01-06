@@ -52,6 +52,8 @@ std::string dir = "results/";
 Time stopTime = Seconds (60);
 uint32_t segmentSize = 524;
 
+
+
 // Function to check queue length of Router 1
 void
 CheckQueueSize (Ptr<QueueDisc> queue)
@@ -113,6 +115,9 @@ void InstallPacketSink (Ptr<Node> node, uint16_t port, std::string socketFactory
 
 int main (int argc, char *argv[])
 {
+  LosslessOnoffTable* globalOnoffTable = new LosslessOnoffTable();
+  globalOnoffTable->globalInit();
+
   uint32_t stream = 1;
   std::string socketFactory = "ns3::TcpSocketFactory";
   std::string tcpTypeId = "ns3::TcpLinuxReno"; //这个是拥塞控制算法对应的组件名称，它装载在TcpL4Protocol::SocketType上，
@@ -245,7 +250,7 @@ int main (int argc, char *argv[])
   tch.SetRootQueueDisc (qdiscTypeId);
   QueueDiscContainer qd;
   tch.Uninstall (routers.Get (0)->GetDevice (0));
-  qd.Add (tch.Install (routers.Get (0)->GetDevice (0)).Get (0));
+  qd.Add (tch.Install (routers.Get (0)->GetDevice (0)).Get (0), globalOnoffTable);
 
   // Enable BQL
   tch.SetQueueLimits ("ns3::DynamicQueueLimits");
@@ -269,6 +274,7 @@ int main (int argc, char *argv[])
 
   // Enable PCAP on all the point to point interfaces
   pointToPointLeaf.EnablePcapAll (dir + "pcap/ns-3", true);
+
 
   Simulator::Stop (stopTime);
   Simulator::Run ();
