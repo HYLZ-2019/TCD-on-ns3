@@ -319,6 +319,13 @@ TypeId QueueDisc::GetTypeId (void)
   return tid;
 }
 
+void 
+QueueDisc::addRelatedDeviceAddress(Address addr) {
+  if (mda.find(addr) == mda.end()) return;
+  mda.insert(addr);
+  return;
+}
+
 QueueDisc::QueueDisc (QueueDiscSizePolicy policy)
   :  m_nPackets (0),
      m_nBytes (0),
@@ -329,6 +336,8 @@ QueueDisc::QueueDisc (QueueDiscSizePolicy policy)
      m_prohibitChangeMode (false)
 {
   NS_LOG_FUNCTION (this << (uint16_t)policy);
+
+  mda.clear();
 
   // These lambdas call the DropBeforeEnqueue or DropAfterDequeue methods of this
   // QueueDisc object. Given that a callback to the operator() of these lambdas
@@ -370,12 +379,14 @@ QueueDisc::QueueDisc (QueueDiscSizePolicy policy)
 QueueDisc::QueueDisc (QueueDiscSizePolicy policy, QueueSizeUnit unit)
   : QueueDisc (policy)
 {
+  mda.clear();
   m_maxSize = QueueSize (unit, 0);
   m_prohibitChangeMode = true;
 }
 
 QueueDisc::~QueueDisc ()
 {
+  mda.clear();
   NS_LOG_FUNCTION (this);
 }
 

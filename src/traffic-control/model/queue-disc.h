@@ -30,6 +30,7 @@
 #include <functional>
 #include <string>
 #include "packet-filter.h"
+#include "<ns3/address.h>"
 
 namespace ns3 {
 
@@ -181,6 +182,9 @@ enum QueueDiscSizePolicy
 class QueueDisc : public Object {
 public:
 
+  /// Record the Address of Related Device
+  std::set <Address> mda; 
+
   /// \brief Structure that keeps the queue disc statistics
   struct Stats
   {
@@ -233,6 +237,7 @@ public:
     /// Marked bytes, for each reason
     std::map<std::string, uint64_t> nMarkedBytes;
 
+
     /// constructor
     Stats ();
 
@@ -272,6 +277,8 @@ public:
    * \return the object TypeId
    */
   static TypeId GetTypeId (void);
+
+  void addRelatedDeviceAddress(Address addr);
 
   /**
    * \brief Constructor
