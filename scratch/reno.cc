@@ -118,7 +118,9 @@ int main (int argc, char *argv[])
   std::string tcpTypeId = "ns3::TcpLinuxReno"; //这个是拥塞控制算法对应的组件名称，它装载在TcpL4Protocol::SocketType上，
   //需要详细观察代码看它是怎么被调用的，并新建一个符合我们要求的tcpType，它要根据routing table上的管子有没有堵住来决定发还是不发，
   //写完后我们要把这个拥塞控制算法换成修改后的tcpType
-  std::string qdiscTypeId = "ns3::FifoQueueDisc"; //这个是装在router上的队列type, 我们需要把它改成on-off model的，
+  std::string qdiscTypeId = "ns3::LosslessQueueDisc"; 
+  //这个是装在router上的队列type, 现在把它改成on-off model的，
+
   //我们要新造一个qdiscType，它需要用另一种和routing包平行的包来和相邻的router交流堵塞信息，并据此更新自己的路由表。
   //特别地，我们是lossless network，所以不能Drop包，只能Congest包。这个应该有封装得比较好的函数可以用来做。
 

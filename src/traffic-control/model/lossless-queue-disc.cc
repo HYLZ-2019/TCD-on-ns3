@@ -71,6 +71,7 @@ LosslessQueueDisc::DoEnqueue (Ptr<QueueDiscItem> item)
 {
   NS_LOG_FUNCTION (this << item);
 
+  //std::cout <<"LosslessQueue doEnqueue" << std :: endl;
   bool retval = GetInternalQueue (0)->Enqueue (item);
 
   if (GetCurrentSize () > qlenUpperBound)

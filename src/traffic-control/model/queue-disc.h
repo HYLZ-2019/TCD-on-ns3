@@ -30,7 +30,7 @@
 #include <functional>
 #include <string>
 #include "packet-filter.h"
-#include "<ns3/address.h>"
+#include "ns3/address.h"
 
 namespace ns3 {
 
