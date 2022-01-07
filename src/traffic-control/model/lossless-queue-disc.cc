@@ -71,7 +71,7 @@ LosslessQueueDisc::DoEnqueue (Ptr<QueueDiscItem> item)
 {
   NS_LOG_FUNCTION (this << item);
 
-  //std::cout <<"LosslessQueue doEnqueue" << std :: endl;
+  std::cout <<"LosslessQueue "<< this <<" doEnqueue" << std :: endl;
   bool retval = GetInternalQueue (0)->Enqueue (item);
 
   if (GetCurrentSize () > qlenUpperBound)
@@ -95,12 +95,14 @@ Ptr<QueueDiscItem>
 LosslessQueueDisc::DoDequeue (void)
 {
   NS_LOG_FUNCTION (this);
+  std::cout <<"LosslessQueue "<< this <<" doDequeue" << std :: endl;
 
   // See the next packet in the queue.
   Ptr<const QueueDiscItem> item = GetInternalQueue (0)->Peek ();
   if (!item)
     {
         NS_LOG_LOGIC ("Queue empty");
+        std::cout << "DoDequeue: queue empty.\n";
         return 0;
     }
 
@@ -108,7 +110,9 @@ LosslessQueueDisc::DoDequeue (void)
     bool destOff = ! onoffTable -> getValue(destMAC); 
     
     if (destOff) {
+        std::cout << "The destination is blocked.\n";
         NS_LOG_LOGIC ("The queue front is blocked by an OFF destination.");
+        onoffTable->printAll();
         /* TODO: 把“this因为destOff而停住了”记录在全局表里，以便onoff表变on的时候，可以重新run这个queue。 */
         onoffTable -> blockQueueAdding(destMAC, (ns3::Ptr<ns3::QueueDisc>)this);
         /* TODO: 在对象里记录下当前队列的长度k。 */
@@ -133,6 +137,7 @@ LosslessQueueDisc::DoDequeue (void)
       blockedCnt--;
   }
 
+  std::cout << "Returning item: " << realitem << "\n";
   return realitem;
 }
 

@@ -967,7 +967,7 @@ void
 QueueDisc::Run (void)
 {
   NS_LOG_FUNCTION (this);
-
+  std::cout << "queue-disc.cc: A queue-disc started to Run().\n";
   if (RunBegin ())
     {
       uint32_t quota = m_quota;

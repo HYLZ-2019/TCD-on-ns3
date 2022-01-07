@@ -89,7 +89,7 @@ bool LosslessOnoffTable::getValue(Address addr) {
     NS_LOG_FUNCTION (this);
     sem_wait(&mutex);
     std :: map <Address, bool> :: iterator it = ONOFFlist.find(addr);
-    if (it != ONOFFlist.end()) {
+    if (it == ONOFFlist.end()) {
         sem_post(&mutex);
         return true; // 不在表里的默认可以
     }
@@ -114,6 +114,20 @@ void LosslessOnoffTable::blockQueueAdding(Address addr, Ptr<QueueDisc> qdisc) {
     blockQueue.insert (std::pair<Address, Ptr<QueueDisc>>(addr, qdisc) );
     sem_post(&BQ);
     return;
+}
+
+void LosslessOnoffTable::printAll(){
+    NS_LOG_FUNCTION (this);
+    sem_wait(&mutex);
+    std::cout << "OnOff Table:\n";
+    for (auto it = ONOFFlist.begin(); it != ONOFFlist.end(); it++){
+        std::cout << it->first << "  :  " << it->second << "\n";
+    }
+    std::cout << "Block queue elements:\n";
+    for (auto it = ONOFFlist.begin(); it != ONOFFlist.end(); it++){
+        std::cout << it->first << "  blocks  " << it->second << "\n";
+    }
+    sem_post(&mutex);
 }
 
 } //namespace ns3

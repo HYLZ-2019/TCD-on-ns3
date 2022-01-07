@@ -245,12 +245,24 @@ int main (int argc, char *argv[])
   // Set default parameters for queue discipline
   Config::SetDefault (qdiscTypeId + "::MaxSize", QueueSizeValue (QueueSize ("100p")));
 
+  std::cout << "cout test\n";
+
   // Install queue discipline on router
   TrafficControlHelper tch;
   tch.SetRootQueueDisc (qdiscTypeId);
   QueueDiscContainer qd;
+  tch.Uninstall (leftNodes.Get (0)->GetDevice (0));
+  qd.Add (tch.Install (leftNodes.Get (0)->GetDevice (0), globalOnoffTable).Get (0));
   tch.Uninstall (routers.Get (0)->GetDevice (0));
   qd.Add (tch.Install (routers.Get (0)->GetDevice (0), globalOnoffTable).Get (0));
+  tch.Uninstall (routers.Get (0)->GetDevice (1));
+  qd.Add (tch.Install (routers.Get (0)->GetDevice (1), globalOnoffTable).Get (0));
+  tch.Uninstall (routers.Get (1)->GetDevice (0));
+  qd.Add (tch.Install (routers.Get (1)->GetDevice (0), globalOnoffTable).Get (0));
+  tch.Uninstall (routers.Get (1)->GetDevice (1));
+  qd.Add (tch.Install (routers.Get (1)->GetDevice (1), globalOnoffTable).Get (0));
+  tch.Uninstall (rightNodes.Get (0)->GetDevice (0));
+  qd.Add (tch.Install (rightNodes.Get (0)->GetDevice (0), globalOnoffTable).Get (0));
 
   // Enable BQL
   tch.SetQueueLimits ("ns3::DynamicQueueLimits");

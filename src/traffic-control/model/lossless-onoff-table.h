@@ -40,6 +40,8 @@ public:
 
     void blockQueueAdding(Address addr, Ptr<QueueDisc> qdisc);
 
+    void printAll();
+
 private:
     sem_t mutex;
     sem_t BQ;
