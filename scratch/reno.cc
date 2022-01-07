@@ -174,7 +174,7 @@ int main (int argc, char *argv[])
 
   // Create the point-to-point link helpers and connect two router nodes
   PointToPointHelper pointToPointRouter;
-  pointToPointRouter.SetDeviceAttribute  ("DataRate", StringValue ("1Mbps"));
+  pointToPointRouter.SetDeviceAttribute  ("DataRate", StringValue ("100bps"));
   pointToPointRouter.SetChannelAttribute ("Delay", StringValue ("10ms"));
   NetDeviceContainer r1r2ND = pointToPointRouter.Install (routers.Get (0), routers.Get (1));
 
