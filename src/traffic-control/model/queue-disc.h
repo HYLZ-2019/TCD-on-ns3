@@ -526,7 +526,7 @@ public:
   static constexpr const char* CHILD_QUEUE_DISC_MARK = "(Marked by child queue disc) "; //!< Packet marked by a child queue disc
 
   /** This is only used by "LosslessQueueDisc"s. The reason why this property is defined in the base class is because the programmer is stupid. */
-  LosslessOnoffTable onoffTable;
+  LosslessOnoffTable* onoffTable;
   void bindLosslessOnoffTable(LosslessOnoffTable* table);
 
 protected:

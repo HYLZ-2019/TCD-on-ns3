@@ -3,7 +3,33 @@
 
 namespace ns3 {
 
+
+NS_LOG_COMPONENT_DEFINE ("LosslessOnoffTable");
+
+NS_OBJECT_ENSURE_REGISTERED (LosslessOnoffTable);
+
+
+TypeId LosslessOnoffTable::GetTypeId (void)
+{
+  static TypeId tid = TypeId ("ns3::LosslessOnoffTable")
+    .SetGroupName ("TrafficControl")
+    .AddConstructor<LosslessOnoffTable> ()
+  ;
+  return tid;
+}
+
+LosslessOnoffTable::LosslessOnoffTable ()
+{
+  NS_LOG_FUNCTION (this);
+}
+
+LosslessOnoffTable::~LosslessOnoffTable ()
+{
+  NS_LOG_FUNCTION (this);
+}
+
 void LosslessOnoffTable::globalInit() {
+    NS_LOG_FUNCTION (this);
     sem_init(&mutex, 0, 1);
     sem_init(&BQ, 0, 1);
     ONOFFlist.clear();
@@ -12,6 +38,7 @@ void LosslessOnoffTable::globalInit() {
 }
 
 void LosslessOnoffTable::addNetDevice(Address addr) { //把这个device address放到list里
+    NS_LOG_FUNCTION (this);
     sem_wait(&mutex);
     if (ONOFFlist.find(addr) == ONOFFlist.end()) { //默认是on
         ONOFFlist[addr] = true;
@@ -21,6 +48,7 @@ void LosslessOnoffTable::addNetDevice(Address addr) { //把这个device address�
 }
 
 void LosslessOnoffTable::setValue(Address addr, bool value) {
+    NS_LOG_FUNCTION (this);
     sem_wait(&mutex);
     std :: map <Address, bool> :: iterator it = ONOFFlist.find(addr);
     if (it == ONOFFlist.end()) {    
@@ -58,6 +86,7 @@ void LosslessOnoffTable::setValue(Address addr, bool value) {
 }
 
 bool LosslessOnoffTable::getValue(Address addr) {
+    NS_LOG_FUNCTION (this);
     sem_wait(&mutex);
     std :: map <Address, bool> :: iterator it = ONOFFlist.find(addr);
     if (it != ONOFFlist.end()) {
@@ -71,6 +100,7 @@ bool LosslessOnoffTable::getValue(Address addr) {
 
 
 void LosslessOnoffTable::blockQueueAdding(Address addr, Ptr<QueueDisc> qdisc) {
+    NS_LOG_FUNCTION (this);
     sem_wait(&BQ);
     auto pos = blockQueue.equal_range(addr);
     

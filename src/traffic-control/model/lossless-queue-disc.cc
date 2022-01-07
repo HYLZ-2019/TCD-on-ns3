@@ -48,17 +48,17 @@ TypeId LosslessQueueDisc::GetTypeId (void)
   return tid;
 }
 
-LosslessQueueDisc::LosslessQueueDisc (LosslessOnoffTable _onofftable)
-  : QueueDisc (QueueDiscSizePolicy::SINGLE_INTERNAL_QUEUE)
-{ // 除了SINGLE_INTERNAL_QUEUE（FIFO用的是这个），也许可以考虑试试别的？
-  NS_LOG_FUNCTION (this);
-  onoffTable = _onofftable;
-}
-
 LosslessQueueDisc::LosslessQueueDisc ()
   : QueueDisc (QueueDiscSizePolicy::SINGLE_INTERNAL_QUEUE)
 { 
   NS_LOG_FUNCTION (this);
+}
+
+LosslessQueueDisc::LosslessQueueDisc (LosslessOnoffTable* _onofftable)
+  : QueueDisc (QueueDiscSizePolicy::SINGLE_INTERNAL_QUEUE)
+{ // 除了SINGLE_INTERNAL_QUEUE（FIFO用的是这个），也许可以考虑试试别的？
+  NS_LOG_FUNCTION (this);
+  onoffTable = _onofftable;
 }
 
 LosslessQueueDisc::~LosslessQueueDisc ()
@@ -79,7 +79,7 @@ LosslessQueueDisc::DoEnqueue (Ptr<QueueDiscItem> item)
         //TODO: 标记全局表中它的device为off。
       std :: set <Address> :: iterator it = mda.begin();
       for (; it != mda.end(); ++it) 
-        onoffTable.setValue(*it, false); 
+        onoffTable -> setValue(*it, false); 
     }
 
   // If Queue::Enqueue fails, QueueDisc::DropBeforeEnqueue is called by the
@@ -105,12 +105,12 @@ LosslessQueueDisc::DoDequeue (void)
     }
 
     Address destMAC = item -> GetAddress();
-    bool destOff = ! onoffTable.getValue(destMAC); 
+    bool destOff = ! onoffTable -> getValue(destMAC); 
     
     if (destOff) {
         NS_LOG_LOGIC ("The queue front is blocked by an OFF destination.");
         /* TODO: 把“this因为destOff而停住了”记录在全局表里，以便onoff表变on的时候，可以重新run这个queue。 */
-        onoffTable.blockQueueAdding(destMAC, (ns3::Ptr<ns3::QueueDisc>)this);
+        onoffTable -> blockQueueAdding(destMAC, (ns3::Ptr<ns3::QueueDisc>)this);
         /* TODO: 在对象里记录下当前队列的长度k。 */
         return 0;
         // 外部可能会因为这里返回0而认为队列空了，从而停止run。如果发现了类似的bug，要记得往这方面想（并且打补丁）。
@@ -122,7 +122,7 @@ LosslessQueueDisc::DoDequeue (void)
     /*TODO: 找到这个node上所有的device, 标记ON*/
     std :: set <Address> :: iterator it = mda.begin();
     for (; it != mda.end(); ++it) 
-      onoffTable.setValue(*it, true); 
+      onoffTable -> setValue(*it, true); 
   }
 
   if (blockedCnt > 0){

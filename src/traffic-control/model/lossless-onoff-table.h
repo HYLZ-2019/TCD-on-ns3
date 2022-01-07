@@ -17,6 +17,18 @@ class QueueDisc;
  */
 class LosslessOnoffTable {
 public:
+    /**
+    * \brief Get the type ID.
+    * \return the object TypeId
+    */
+    static TypeId GetTypeId (void);
+    /**
+    * \brief LosslessOnoffTable constructor
+    */
+    LosslessOnoffTable ();
+
+    virtual ~LosslessOnoffTable();
+
     void globalInit();
 
     void addNetDevice(Address addr); //把某个device addr放到list里

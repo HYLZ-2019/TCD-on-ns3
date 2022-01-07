@@ -44,9 +44,9 @@ public:
    *
    * Creates a queue with a depth of 1000 packets by default
    */
-  LosslessQueueDisc (LosslessOnoffTable _onofftable);
-
   LosslessQueueDisc ();
+
+  LosslessQueueDisc (LosslessOnoffTable* _onofftable);
 
   virtual ~LosslessQueueDisc();
   
