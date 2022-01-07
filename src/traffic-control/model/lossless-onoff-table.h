@@ -1,6 +1,7 @@
 #ifndef LOSSLESS_ONOFF_TABLE_H
 #define LOSSLESS_ONOFF_TABLE_H
 
+#include "ns3/object.h"
 #include <vector>
 #include <map>
 #include <ns3/address.h>
@@ -15,7 +16,7 @@ class QueueDisc;
  * A single LosslessOnoffTable is used for an entire lossless network.
  * "LosslessQueueDisc"s interact with a LosslessOnoffTable to update on/off statuses. 
  */
-class LosslessOnoffTable {
+class LosslessOnoffTable: public Object {
 public:
     /**
     * \brief Get the type ID.
