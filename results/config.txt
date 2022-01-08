@@ -1,5 +1,0 @@
-qdiscTypeId ns3::LosslessQueueDisc
-stream  1
-segmentSize 524
-delAckCount 1
-stopTime +60s

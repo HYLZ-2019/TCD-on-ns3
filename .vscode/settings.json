@@ -67,6 +67,25 @@
         "xloctime": "cpp",
         "xmemory": "cpp",
         "xstddef": "cpp",
-        "xtr1common": "cpp"
+        "xtr1common": "cpp",
+        "*.tcc": "cpp",
+        "clocale": "cpp",
+        "condition_variable": "cpp",
+        "cwctype": "cpp",
+        "memory_resource": "cpp",
+        "string_view": "cpp",
+        "cinttypes": "cpp",
+        "cfenv": "cpp",
+        "codecvt": "cpp",
+        "csetjmp": "cpp",
+        "cuchar": "cpp",
+        "forward_list": "cpp",
+        "unordered_set": "cpp",
+        "regex": "cpp",
+        "future": "cpp",
+        "scoped_allocator": "cpp",
+        "shared_mutex": "cpp",
+        "typeindex": "cpp",
+        "valarray": "cpp"
     }
 }
