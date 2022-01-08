@@ -56,8 +56,8 @@ public:
    */
   int blockedCnt;
   
-  QueueSize qlenLowerBound = QueueSize("50p");
-  QueueSize qlenUpperBound = QueueSize("80p");
+  QueueSize qlenLowerBound = QueueSize("5p");
+  QueueSize qlenUpperBound = QueueSize("10p");
 private:
   virtual bool DoEnqueue (Ptr<QueueDiscItem> item);
   virtual Ptr<QueueDiscItem> DoDequeue (void);

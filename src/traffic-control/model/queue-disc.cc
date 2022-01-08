@@ -322,7 +322,7 @@ TypeId QueueDisc::GetTypeId (void)
 
 void 
 QueueDisc::addRelatedDeviceAddress(Address addr) {
-  if (mda.find(addr) == mda.end()) return;
+  if (mda.find(addr) != mda.end()) return;
   mda.insert(addr);
   return;
 }

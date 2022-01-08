@@ -48,16 +48,20 @@ void LosslessOnoffTable::addNetDevice(Address addr) { //把这个device address�
 }
 
 void LosslessOnoffTable::setValue(Address addr, bool value) {
+    std :: cout << "LosslessOnoffTable " << this << " : setValue(" << addr << ", " << value << ")\n";
     NS_LOG_FUNCTION (this);
     sem_wait(&mutex);
     std :: map <Address, bool> :: iterator it = ONOFFlist.find(addr);
     if (it == ONOFFlist.end()) {    
+        ONOFFlist[addr] = value; // This should be on->off, because the queue is default on.
         sem_post(&mutex);
+        std :: cout << "LosslessOnoffTable " << this << " : setValue(" << addr << ", " << value << ") -> added new value\n";
         return;
     }
 
     if (it -> second == value) { // No need to change
         sem_post(&mutex);
+        std :: cout << "LosslessOnoffTable " << this << " : setValue(" << addr << ", " << value << ") -> no need to change\n";
         return;
     }
 
@@ -80,8 +84,12 @@ void LosslessOnoffTable::setValue(Address addr, bool value) {
 
             qDisc->Run ();
         }
+        std :: cout << "LosslessOnoffTable " << this << " : setValue(" << addr << ", " << value << ") -> OFF to ON\n";
     }
-
+    else {
+        std :: cout << "LosslessOnoffTable " << this << " : setValue(" << addr << ", " << value << ") -> ON to OFF !!\n";
+    }
+    
     return;
 }
 
@@ -119,6 +127,9 @@ void LosslessOnoffTable::blockQueueAdding(Address addr, Ptr<QueueDisc> qdisc) {
 void LosslessOnoffTable::printAll(){
     NS_LOG_FUNCTION (this);
     sem_wait(&mutex);
+    if (ONOFFlist.empty()){
+        std::cout << "ONOFFlist is empty!!!!\n";
+    }
     std::cout << "OnOff Table:\n";
     for (auto it = ONOFFlist.begin(); it != ONOFFlist.end(); it++){
         std::cout << it->first << "  :  " << it->second << "\n";

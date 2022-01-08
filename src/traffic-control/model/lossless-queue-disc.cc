@@ -76,7 +76,7 @@ LosslessQueueDisc::DoEnqueue (Ptr<QueueDiscItem> item)
 
   if (GetCurrentSize () > qlenUpperBound)
     {
-      std::cout << "Device " << this << "tries to turn OFF\n";
+      std::cout << "Device " << this << " tries to turn OFF\n";
         //TODO: 标记全局表中它的device为off。
       std :: set <Address> :: iterator it = mda.begin();
       for (; it != mda.end(); ++it) 
@@ -124,7 +124,7 @@ LosslessQueueDisc::DoDequeue (void)
   Ptr<QueueDiscItem> realitem = GetInternalQueue (0)->Dequeue (); // not const
 
   if (GetCurrentSize() <= qlenLowerBound) {
-    std::cout << "Device " << this << "tries to turn ON\n";
+    std::cout << "Device " << this << " tries to turn ON\n";
     /*TODO: 找到这个node上所有的device, 标记ON*/
     std :: set <Address> :: iterator it = mda.begin();
     for (; it != mda.end(); ++it) 

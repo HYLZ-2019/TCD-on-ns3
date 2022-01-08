@@ -167,9 +167,9 @@ CheckQueueSize (Ptr<QueueDisc> queue)
     fPlotQueue << "]\n";
     fPlotQueue.close ();
   }
-
+  qd.Get(0)->onoffTable->printAll();
   // Check queue size every 1/100 of a second
-  Simulator::Schedule (Seconds (0.01), &CheckQueueSize, queue);
+  Simulator::Schedule (Seconds (1), &CheckQueueSize, queue);
 }
 
 void build(std::string filename) {
@@ -322,7 +322,7 @@ int main (int argc, char *argv[])
   //InstallBulkSend (leftNodes.Get (0), routerToRightIPAddress [0].GetAddress (1), port, socketFactory);
   InstallOnOffSend (nodes.Get (0), IPAddresses [m - 1].GetAddress (1), port, socketFactory, 
                     "ns3::ConstantRandomVariable[Constant=1]", "ns3::ConstantRandomVariable[Constant=0]", 
-                    1024, "1Mbps");
+                    1024, "10Kbps");
 
 
   // Enable PCAP on all the point to point interfaces
