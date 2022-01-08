@@ -55,18 +55,6 @@ uint32_t segmentSize = 524;
 
 
 
-// Function to check queue length of Router 1
-void
-CheckQueueSize (Ptr<QueueDisc> queue)
-{
-  uint32_t qSize = queue->GetCurrentSize ().GetValue ();
-
-  // Check queue size every 1/100 of a second
-  Simulator::Schedule (Seconds (0.001), &CheckQueueSize, queue);
-  std::ofstream fPlotQueue (std::stringstream (dir + "queue-size.dat").str ().c_str (), std::ios::out | std::ios::app);
-  fPlotQueue << Simulator::Now ().GetSeconds () << " " << qSize << std::endl;
-  fPlotQueue.close ();
-}
 
 //这东西是一个跟踪输出cwnd变化的，现在不要tcp就也不要cwnd
 // Function to trace change in cwnd at n0
@@ -120,7 +108,7 @@ void InstallOnOffSend (Ptr<Node> node, Ipv4Address address, uint16_t port, std::
   onoff.SetAttribute ("PacketSize", UintegerValue(payloadSize));
   onoff.SetAttribute ("DataRate", StringValue(dataRate)); //bit/s
   ApplicationContainer onoffApps = onoff.Install (node);
-  onoffApps.Start (Seconds (10.0));
+  onoffApps.Start (Seconds (1.0));
   onoffApps.Stop (stopTime);
 
   //Simulator::Schedule (Seconds (10.0) + Seconds (0.001), &TraceCwnd, nodeId, cwndWindow, CwndTrace);
@@ -133,7 +121,7 @@ void InstallPacketSink (Ptr<Node> node, uint16_t port, std::string socketFactory
 {
   PacketSinkHelper sink (socketFactory, InetSocketAddress (Ipv4Address::GetAny (), port));
   ApplicationContainer sinkApps = sink.Install (node);
-  sinkApps.Start (Seconds (10.0));
+  sinkApps.Start (Seconds (1.0));
   sinkApps.Stop (stopTime);
 }
 
@@ -156,6 +144,33 @@ std::string qdiscTypeId = "ns3::LosslessQueueDisc";
 //我们要新造一个qdiscType，它需要用另一种和routing包平行的包来和相邻的router交流堵塞信息，并据此更新自己的路由表。
 //特别地，我们是lossless network，所以不能Drop包，只能Congest包。这个应该有封装得比较好的函数可以用来做。
 
+
+
+// Function to check queue length of all queues and save results in dir + "queue-size-num.dat"
+// Why "queue" is passed in and not used is because I don't want to understand the APIs of Schedule.
+void
+CheckQueueSize (Ptr<QueueDisc> queue)
+{
+  for (int num=0; num<n; num++){
+    queue = qd.Get(num);
+    uint32_t qSize = queue->GetCurrentSize ().GetValue ();
+
+    std::ofstream fPlotQueue (std::stringstream (dir + "queue-size-" + std::to_string(num) + ".dat").str ().c_str (), std::ios::out | std::ios::app);
+    fPlotQueue << Simulator::Now ().GetSeconds () << " " << qSize <<" On: [";
+    
+    Ptr<ns3::Node> node = nodes.Get(num);
+    uint32_t d = node -> GetNDevices();
+    for (uint32_t i = 0; i + 1 != d; ++i) {
+      Ptr<NetDevice> dev = node -> GetDevice (i);
+      fPlotQueue << "Device " << i << ":" << queue->onoffTable->getValue(dev->GetAddress()) << " ";
+    }
+    fPlotQueue << "]\n";
+    fPlotQueue.close ();
+  }
+
+  // Check queue size every 1/100 of a second
+  Simulator::Schedule (Seconds (0.01), &CheckQueueSize, queue);
+}
 
 void build(std::string filename) {
   std::freopen(filename.c_str(), "r", stdin);
@@ -307,7 +322,7 @@ int main (int argc, char *argv[])
   //InstallBulkSend (leftNodes.Get (0), routerToRightIPAddress [0].GetAddress (1), port, socketFactory);
   InstallOnOffSend (nodes.Get (0), IPAddresses [m - 1].GetAddress (1), port, socketFactory, 
                     "ns3::ConstantRandomVariable[Constant=1]", "ns3::ConstantRandomVariable[Constant=0]", 
-                    1024, "50Mbps");
+                    1024, "1Mbps");
 
 
   // Enable PCAP on all the point to point interfaces
