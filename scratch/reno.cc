@@ -67,14 +67,16 @@ CheckQueueSize (Ptr<QueueDisc> queue)
   fPlotQueue.close ();
 }
 
+//这东西是一个跟踪输出cwnd变化的，现在不要tcp就也不要cwnd
 // Function to trace change in cwnd at n0
+/*
 static void
 CwndChange (uint32_t oldCwnd, uint32_t newCwnd)
 {
   std::ofstream fPlotQueue (dir + "cwndTraces/n0.dat", std::ios::out | std::ios::app);
   fPlotQueue << Simulator::Now ().GetSeconds () << " " << newCwnd / segmentSize << std::endl;
   fPlotQueue.close ();
-}
+}*/
 
 // Function to calculate drops in a particular Queue
 static void
@@ -84,23 +86,26 @@ DropAtQueue (Ptr<OutputStreamWrapper> stream, Ptr<const QueueDiscItem> item)
 }
 
 // Trace Function for cwnd
+/*
 void
 TraceCwnd (uint32_t node, uint32_t cwndWindow,
            Callback <void, uint32_t, uint32_t> CwndTrace)
 {
   Config::ConnectWithoutContext ("/NodeList/" + std::to_string (node) + "/$ns3::TcpL4Protocol/SocketList/" + std::to_string (cwndWindow) + "/CongestionWindow", CwndTrace);
-}
+}*/
 
 // Function to install BulkSend application
-void InstallBulkSend (Ptr<Node> node, Ipv4Address address, uint16_t port, std::string socketFactory,
+/*void InstallBulkSend (Ptr<Node> node, Ipv4Address address, uint16_t port, std::string socketFactory,
                       uint32_t nodeId, uint32_t cwndWindow,
-                      Callback <void, uint32_t, uint32_t> CwndTrace)
+                      Callback <void, uint32_t, uint32_t> CwndTrace)*/
+void InstallBulkSend (Ptr<Node> node, Ipv4Address address, uint16_t port, std::string socketFactory)
 {
   BulkSendHelper source (socketFactory, InetSocketAddress (address, port));
-  source.SetAttribute ("MaxBytes", UintegerValue (0));
+  source.SetAttribute ("MaxBytes", UintegerValue (0)); //不知道这个参数是干嘛的
   ApplicationContainer sourceApps = source.Install (node);
   sourceApps.Start (Seconds (10.0));
-  Simulator::Schedule (Seconds (10.0) + Seconds (0.001), &TraceCwnd, nodeId, cwndWindow, CwndTrace);
+  //Simulator::Schedule (Seconds (10.0) + Seconds (0.001), &TraceCwnd, nodeId, cwndWindow, CwndTrace);
+  //把定时跟踪输出去掉
   sourceApps.Stop (stopTime);
 }
 
@@ -119,34 +124,40 @@ int main (int argc, char *argv[])
   globalOnoffTable->globalInit();
 
   uint32_t stream = 1;
-  std::string socketFactory = "ns3::TcpSocketFactory";
-  std::string tcpTypeId = "ns3::TcpLinuxReno"; //这个是拥塞控制算法对应的组件名称，它装载在TcpL4Protocol::SocketType上，
+  std::string transportProt = "Udp";
+  std::string socketFactory = "ns3::UdpSocketFactory";  //改用UDP
+  
+  //std::string tcpTypeId = "ns3::TcpLinuxReno"; //这个是拥塞控制算法对应的组件名称，它装载在TcpL4Protocol::SocketType上，
+
+  
   //需要详细观察代码看它是怎么被调用的，并新建一个符合我们要求的tcpType，它要根据routing table上的管子有没有堵住来决定发还是不发，
   //写完后我们要把这个拥塞控制算法换成修改后的tcpType
+
   std::string qdiscTypeId = "ns3::LosslessQueueDisc"; 
-  //这个是装在router上的队列type, 现在把它改成on-off model的，
+  //这个是装在TC Layer上的队列type, 现在把它改成on-off model的，
 
   //我们要新造一个qdiscType，它需要用另一种和routing包平行的包来和相邻的router交流堵塞信息，并据此更新自己的路由表。
   //特别地，我们是lossless network，所以不能Drop包，只能Congest包。这个应该有封装得比较好的函数可以用来做。
 
   //根据TCD的构想，网络内部的情况，绑在包上，ns3的packet类有个Tag属性，可以通过打Tag来把拥塞标记弄到包上，在网络边缘检测tag标记修改拥塞控制
   bool isSack = true;
-  uint32_t delAckCount = 1;
-  std::string recovery = "ns3::TcpClassicRecovery"; 
+  //uint32_t delAckCount = 1;
+  //std::string recovery = "ns3::TcpClassicRecovery"; 
 
   CommandLine cmd;
-  cmd.AddValue ("tcpTypeId", "TCP variant to use (e.g., ns3::TcpNewReno, ns3::TcpLinuxReno, etc.)", tcpTypeId);
+  //cmd.AddValue ("tcpTypeId", "TCP variant to use (e.g., ns3::TcpNewReno, ns3::TcpLinuxReno, etc.)", tcpTypeId);
   cmd.AddValue ("qdiscTypeId", "Queue disc for gateway (e.g., ns3::CoDelQueueDisc)", qdiscTypeId);
-  cmd.AddValue ("segmentSize", "TCP segment size (bytes)", segmentSize);
-  cmd.AddValue ("delAckCount", "Delayed ack count", delAckCount);
-  cmd.AddValue ("enableSack", "Flag to enable/disable sack in TCP", isSack);
+  //cmd.AddValue ("segmentSize", "TCP segment size (bytes)", segmentSize);
+  //cmd.AddValue ("delAckCount", "Delayed ack count", delAckCount);
+  //cmd.AddValue ("enableSack", "Flag to enable/disable sack in TCP", isSack);
   cmd.AddValue ("stopTime", "Stop time for applications / simulation time will be stopTime", stopTime);
-  cmd.AddValue ("recovery", "Recovery algorithm type to use (e.g., ns3::TcpPrrRecovery", recovery);
+  //cmd.AddValue ("recovery", "Recovery algorithm type to use (e.g., ns3::TcpPrrRecovery", recovery);
   cmd.Parse (argc, argv);
 
   TypeId qdTid;
   NS_ABORT_MSG_UNLESS (TypeId::LookupByNameFailSafe (qdiscTypeId, &qdTid), "TypeId " << qdiscTypeId << " not found");
 
+  /*
   // Set recovery algorithm and TCP variant
   Config::SetDefault ("ns3::TcpL4Protocol::RecoveryType", TypeIdValue (TypeId::LookupByName (recovery)));
   if (tcpTypeId.compare ("ns3::TcpWestwoodPlus") == 0)
@@ -161,7 +172,7 @@ int main (int argc, char *argv[])
       TypeId tcpTid;
       NS_ABORT_MSG_UNLESS (TypeId::LookupByNameFailSafe (tcpTypeId, &tcpTid), "TypeId " << tcpTypeId << " not found");
       Config::SetDefault ("ns3::TcpL4Protocol::SocketType", TypeIdValue (TypeId::LookupByName (tcpTypeId)));
-    }
+    }*/
 
   // Create nodes
   NodeContainer leftNodes, rightNodes, routers;
@@ -172,18 +183,23 @@ int main (int argc, char *argv[])
   std::vector <NetDeviceContainer> leftToRouter;
   std::vector <NetDeviceContainer> routerToRight;
 
+  // Create the point-to-point link helpers and connect leaf nodes to router
+  PointToPointHelper pointToPointLeft;
+  pointToPointLeft.SetDeviceAttribute    ("DataRate", StringValue ("10Mbps"));
+  pointToPointLeft.SetChannelAttribute   ("Delay", StringValue ("1ms"));
+  leftToRouter.push_back (pointToPointLeaf.Install (leftNodes.Get (0), routers.Get (0)));
+
   // Create the point-to-point link helpers and connect two router nodes
   PointToPointHelper pointToPointRouter;
   pointToPointRouter.SetDeviceAttribute  ("DataRate", StringValue ("100bps"));
   pointToPointRouter.SetChannelAttribute ("Delay", StringValue ("10ms"));
   NetDeviceContainer r1r2ND = pointToPointRouter.Install (routers.Get (0), routers.Get (1));
 
-  // Create the point-to-point link helpers and connect leaf nodes to router
-  PointToPointHelper pointToPointLeaf;
-  pointToPointLeaf.SetDeviceAttribute    ("DataRate", StringValue ("10Mbps"));
-  pointToPointLeaf.SetChannelAttribute   ("Delay", StringValue ("1ms"));
-  leftToRouter.push_back (pointToPointLeaf.Install (leftNodes.Get (0), routers.Get (0)));
-  routerToRight.push_back (pointToPointLeaf.Install (routers.Get (1), rightNodes.Get (0)));
+  
+  PointToPointHelper pointToPointRight;
+  pointToPointRight.SetDeviceAttribute    ("DataRate", StringValue ("2Mbps"));
+  pointToPointRight.SetChannelAttribute   ("Delay", StringValue ("1ms"));
+  routerToRight.push_back (pointToPointRight.Install (routers.Get (1), rightNodes.Get (0)));
 
   InternetStackHelper internetStack;
 
@@ -206,6 +222,7 @@ int main (int argc, char *argv[])
 
   Ipv4GlobalRoutingHelper::PopulateRoutingTables ();
 
+/*
   // Set default sender and receiver buffer size as 1MB
   Config::SetDefault ("ns3::TcpSocket::SndBufSize", UintegerValue (1 << 20));
   Config::SetDefault ("ns3::TcpSocket::RcvBufSize", UintegerValue (1 << 20));
@@ -221,6 +238,7 @@ int main (int argc, char *argv[])
 
   // Enable/Disable SACK in TCP
   Config::SetDefault ("ns3::TcpSocketBase::Sack", BooleanValue (isSack));
+*/
 
   // Create directories to store dat files
   struct stat buffer;
@@ -238,8 +256,8 @@ int main (int argc, char *argv[])
   NS_ASSERT_MSG (retVal == 0, "Error in return value");
   retVal = system ((dirToSave + "/queueTraces/").c_str ());
   NS_ASSERT_MSG (retVal == 0, "Error in return value");
-  retVal = system ((dirToSave + "/cwndTraces/").c_str ());
-  NS_ASSERT_MSG (retVal == 0, "Error in return value");
+ // retVal = system ((dirToSave + "/cwndTraces/").c_str ());
+ // NS_ASSERT_MSG (retVal == 0, "Error in return value");
   NS_UNUSED (retVal);
 
   // Set default parameters for queue discipline
@@ -279,13 +297,15 @@ int main (int argc, char *argv[])
 
   // Install packet sink at receiver side
   uint16_t port = 50000;
-  InstallPacketSink (rightNodes.Get (0), port, "ns3::TcpSocketFactory");
+  InstallPacketSink (rightNodes.Get (0), port, socketFactory);
 
   // Install BulkSend application
-  InstallBulkSend (leftNodes.Get (0), routerToRightIPAddress [0].GetAddress (1), port, socketFactory, 2, 0, MakeCallback (&CwndChange));
+  //InstallBulkSend (leftNodes.Get (0), routerToRightIPAddress [0].GetAddress (1), port, socketFactory, 2, 0, MakeCallback (&CwndChange));
+  InstallBulkSend (leftNodes.Get (0), routerToRightIPAddress [0].GetAddress (1), port, socketFactory);
 
   // Enable PCAP on all the point to point interfaces
-  pointToPointLeaf.EnablePcapAll (dir + "pcap/ns-3", true);
+  pointToPointLeft.EnablePcapAll (dir + "pcap/ns-3", true);
+  pointToPointRight.EnablePcapAll (dir + "pcap/ns-3", true);
 
 
   Simulator::Stop (stopTime);
@@ -303,9 +323,9 @@ int main (int argc, char *argv[])
   myfile.open (dir + "config.txt", std::fstream::in | std::fstream::out | std::fstream::app);
   myfile << "qdiscTypeId " << qdiscTypeId << "\n";
   myfile << "stream  " << stream << "\n";
-  myfile << "segmentSize " << segmentSize << "\n";
-  myfile << "delAckCount " << delAckCount << "\n";
-  myfile << "stopTime " << stopTime.As (Time::S) << "\n";
+  //myfile << "segmentSize " << segmentSize << "\n";
+  //myfile << "delAckCount " << delAckCount << "\n";
+  //myfile << "stopTime " << stopTime.As (Time::S) << "\n";
   myfile.close ();
 
   Simulator::Destroy ();
