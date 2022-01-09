@@ -36,11 +36,11 @@ class UdpL4Protocol;
  * This class implements the API for creating UDP sockets.
  * It is a socket factory (deriving from class SocketFactory).
  */
-class UdpSocketFactoryImpl : public UdpSocketFactory
+class UdpSocketFactoryDcqcn : public UdpSocketFactory
 {
 public:
-  UdpSocketFactoryImpl ();
-  virtual ~UdpSocketFactoryImpl ();
+  UdpSocketFactoryDcqcn ();
+  virtual ~UdpSocketFactoryDcqcn ();
 
   /**
    * \brief Set the associated UDP L4 protocol.
