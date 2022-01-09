@@ -23,16 +23,17 @@
 
 #include <queue>
 #include "ns3/packet.h"
-#include "queue.h"
-#include "drop-tail-queue.h"
+#include "ns3/queue.h"
+#include "ns3/drop-tail-queue.h"
 #include "ns3/point-to-point-net-device.h"
 #include "ns3/event-id.h"
 
 namespace ns3 {
 
 	class TraceContainer;
-
-	class BEgressQueue : public Queue {
+	
+	template <typename Item>
+	class BEgressQueue : public Queue<Item> {
 	public:
 		static TypeId GetTypeId(void);
 		static const unsigned fCnt = 128; //max number of queues, 128 for NICs
@@ -48,7 +49,7 @@ namespace ns3 {
 		uint32_t GetNBytesTotal() const;
 		uint32_t GetLastQueue();
 		uint32_t m_fcount;
-		void RecoverQueue(Ptr<DropTailQueue> buffer, uint32_t i);
+		void RecoverQueue(Ptr<DropTailQueue <Item> > buffer, uint32_t i);
 
 	private:
 		bool DoEnqueue(Ptr<Packet> p, uint32_t qIndex);
