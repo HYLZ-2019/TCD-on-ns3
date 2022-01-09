@@ -39,10 +39,6 @@ class Packet;
 class UdpEchoClient : public Application 
 {
 public:
-  /**
-   * \brief Get the type ID.
-   * \return the object TypeId
-   */
   static TypeId GetTypeId (void);
 
   UdpEchoClient ();
@@ -50,16 +46,12 @@ public:
   virtual ~UdpEchoClient ();
 
   /**
-   * \brief set the remote address and port
-   * \param ip remote IP address
-   * \param port remote port
+   * \param ip destination ipv4 address
+   * \param port destination port
    */
   void SetRemote (Address ip, uint16_t port);
-  /**
-   * \brief set the remote address
-   * \param addr remote address
-   */
-  void SetRemote (Address addr);
+  void SetRemote (Ipv4Address ip, uint16_t port);
+  void SetRemote (Ipv6Address ip, uint16_t port);
 
   /**
    * Set the data size of the packet (the number of bytes that are sent as data
@@ -138,50 +130,31 @@ private:
   virtual void StartApplication (void);
   virtual void StopApplication (void);
 
-  /**
-   * \brief Schedule the next packet transmission
-   * \param dt time interval between packets.
-   */
   void ScheduleTransmit (Time dt);
-  /**
-   * \brief Send a packet
-   */
   void Send (void);
 
-  /**
-   * \brief Handle a packet reception.
-   *
-   * This function is called by lower layers.
-   *
-   * \param socket the socket the packet was received to.
-   */
   void HandleRead (Ptr<Socket> socket);
 
-  uint32_t m_count; //!< Maximum number of packets the application will send
-  Time m_interval; //!< Packet inter-send time
-  uint32_t m_size; //!< Size of the sent packet
+  uint32_t m_count;
+  uint64_t m_allowed;
+  uint32_t m_chunk;
 
-  uint32_t m_dataSize; //!< packet payload size (must be equal to m_size)
-  uint8_t *m_data; //!< packet payload data
+  Time m_interval;
+  uint32_t m_size;
 
-  uint32_t m_sent; //!< Counter for sent packets
-  Ptr<Socket> m_socket; //!< Socket
-  Address m_peerAddress; //!< Remote peer address
-  uint16_t m_peerPort; //!< Remote peer port
-  EventId m_sendEvent; //!< Event to send the next packet
+  uint32_t m_dataSize;
+  uint8_t *m_data;
 
+  uint32_t m_sent;
+  uint64_t m_sentBytes;
+  Ptr<Socket> m_socket;
+  Address m_peerAddress;
+  uint16_t m_peerPort;
+  EventId m_sendEvent;
   /// Callbacks for tracing the packet Tx events
   TracedCallback<Ptr<const Packet> > m_txTrace;
 
-  /// Callbacks for tracing the packet Rx events
-  TracedCallback<Ptr<const Packet> > m_rxTrace;
-  
-  /// Callbacks for tracing the packet Tx events, includes source and destination addresses
-  TracedCallback<Ptr<const Packet>, const Address &, const Address &> m_txTraceWithAddresses;
-  
-  /// Callbacks for tracing the packet Rx events, includes source and destination addresses
-  TracedCallback<Ptr<const Packet>, const Address &, const Address &> m_rxTraceWithAddresses;
-
+  uint16_t m_pg;
 };
 
 } // namespace ns3
