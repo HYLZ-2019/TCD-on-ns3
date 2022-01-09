@@ -211,7 +211,7 @@ void build(std::string filename) {
   Ipv4GlobalRoutingHelper::PopulateRoutingTables ();
 
   // Set default parameters for queue discipline
-  Config::SetDefault (qdiscTypeId + "::MaxSize", QueueSizeValue (QueueSize ("100p")));
+  Config::SetDefault (qdiscTypeId + "::MaxSize", QueueSizeValue (QueueSize ("1000p")));
 
   // Install queue discipline on router
   tch.SetRootQueueDisc (qdiscTypeId);
@@ -326,7 +326,7 @@ int main (int argc, char *argv[])
   //InstallBulkSend (leftNodes.Get (0), routerToRightIPAddress [0].GetAddress (1), port, socketFactory);
   InstallOnOffSend (nodes.Get (0), IPAddresses [m - 1].GetAddress (1), port, socketFactory, 
                     "ns3::ConstantRandomVariable[Constant=1]", "ns3::ConstantRandomVariable[Constant=0]", 
-                    1024, "10Kbps");
+                    1024, "1Mbps");
 
 
   // Enable PCAP on all the point to point interfaces
@@ -339,9 +339,18 @@ int main (int argc, char *argv[])
   // Store queue stats in a file
   std::ofstream myfile;
   myfile.open (dir + "queueStats.txt", std::fstream::in | std::fstream::out | std::fstream::app);
+  int queue_num = 0;
+  for (int i = 0; i < n; ++i) {
+    Ptr<ns3::Node> node = nodes.Get(i);
+    uint32_t num = node -> GetNDevices();
+    for (uint32_t k = 0; k + 1 != num; ++k) {
+      Ptr<QueueDisc> queue= qd.Get(queue_num);
+      myfile << "Stat for Queue " << i << "-" << k << ":";
+      myfile << qd.Get (queue_num)->GetStats ();
+      queue_num ++;
+    }  // Check queue size every 1/100 of a second
   myfile << std::endl;
-  myfile << "Stat for Queue 1";
-  myfile << qd.Get (0)->GetStats ();
+  }
   myfile.close ();
 
   // Store configuration of the simulation in a file
