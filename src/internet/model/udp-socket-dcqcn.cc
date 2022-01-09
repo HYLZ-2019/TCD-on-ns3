@@ -34,11 +34,15 @@
 #include "ns3/trace-source-accessor.h"
 #include "ns3/ipv4-packet-info-tag.h"
 #include "ns3/ipv6-packet-info-tag.h"
+#include "ns3/error-model.h"
+#include "ns3/flow-id-tag.h"
+#include "ns3/udp-header.h"
 #include "udp-socket-dcqcn.h"
 #include "udp-l4-protocol.h"
 #include "ipv4-end-point.h"
 #include "ipv6-end-point.h"
 #include <limits>
+#define RDMA_RECV
 
 namespace ns3 {
 
@@ -1000,7 +1004,86 @@ UdpSocketDcqcn::ForwardUp (Ptr<Packet> packet, Ipv4Header header, uint16_t port,
                           Ptr<Ipv4Interface> incomingInterface)
 {
   NS_LOG_FUNCTION (this << packet << header << port);
+#ifdef RDMA_RECV
+  // 跳过判断坏包部分
+  // if(m_receiveErrorModel && m_receiveErrorModel->IsCorrupt(packet)) {
 
+  // }
+  
+  // 这里它原来是利用RemoveHeader获取的header，但是我们这里已经有header了，就用给的🤔
+  uint8_t protocol = header.GetProtocol ();
+  if((protocol != 0xFF && protocol != 0xFD && protocol != 0xFC) 
+  // || m_node->GetNodeType() > 0
+  ) {
+    // This is not QCN feedback, not NACK, or I am a switch I don't care
+    if(protocol != 0xFE) {  // not PFC
+      // packet->AddPacketTag(FlowIdTag(m_ifIndex));
+      // if(m_node->GetNodeType() == 0) {  // NIC
+        // we donot have getNodeType()! so I suppose we are NIC
+        if(protocol == 17) {  // look at udp only
+          //! 这个其实是有的，但是unused，所以注释了，不然编译不了
+          // uint16_t ecnbits = header.GetEcn();  
+          UdpHeader udph;
+          packet->RemoveHeader (udph);
+          // SeqTsHeader sth; // we don't have SeqTsHeader
+          // p->PeekHeader (sth);
+          packet->AddHeader (udph);
+
+          bool found = false;
+          // uint32_t i, key = 0;
+
+          // 我们没有m_ecn_source，摆了
+          // for(i=0; i<m_ecn_source->size(); ++i) {
+            // ...
+          // }
+
+          if(!found) {
+            // 同上，什么都做不了
+            // ...
+          }
+
+          // 下面的还是需要SeqTsHeader的，我麻了
+          // ...
+        }
+
+      // 这个自然也没有😇，不过其实下面的分支好像经常用到，这个应该才是实际的发送？
+      // PointToPointReceive(packet);
+      } else {  // If this is a Pause, stop the corresponding queue
+        // 不做PFC
+        NS_ASSERT("我们不做PFC" == nullptr);
+      }
+    } else if(protocol == 0xFF) { // QCN on NIC
+      // This is a Congestion signal
+      // Then, extract data from the congestion packet.
+      // We assume, without verify, the packet is destinated to me
+      
+      // 这里实际上是要用CnHeader的，但我们没有，就只能先这样了
+      Ipv4Header ipv4h;
+      packet->Copy()->RemoveHeader(ipv4h);
+      // uint32_t qIndex = 
+      // if(qIndex==1) return;  // DCTCP
+      // uint32_t udpport = ipv4h.GetFlow();
+      // uint16_t ecnbits = ipv4h.GetECNBits();
+      // ... 这里一大段都是要CnHeader的，改不动
+      // 涉及到m_queue, m_rate, m_rateALL, m_targetRate等
+
+    } else if(protocol == 0xFD) { // NACK on NIC
+      // qbbHeader qbbh;
+      // packet->Copy()->RemoveHeader(qbbh);
+      // ... 这里一大段都是要qbbHeader的，改不动
+      // 涉及到m_queue, m_findex_udpport_map, m_seddingBuffer
+      // , m_chunk, m_waitAck, m_waitingAck, m_nextAvail, m_retransmit
+      //todo 这里涉及到了m_nextAvail，应该是个重点
+    } else if(protocol == 0xFC) { // ACK on NIC
+      // qbbHeader qbbh;
+      // p->Copy()->RemoveHeader(qbbh);
+      // ... 没qbbHeader改不动
+      // 涉及到m_queue, m_findex_udpport_map, m_sendingBuffer, m_nextAvail
+      // , m_ack_interval, m_backto0, m_chunk, m_waitAck, m_miletone_tx
+      //todo 这里涉及到了m_nextAvail，应该是个重点
+    }
+
+#else
   if (m_shutdownRecv)
     {
       return;
@@ -1053,6 +1136,7 @@ UdpSocketDcqcn::ForwardUp (Ptr<Packet> packet, Ipv4Header header, uint16_t port,
       NS_LOG_WARN ("No receive buffer space available.  Drop.");
       m_dropTrace (packet);
     }
+#endif
 }
 
 void 
@@ -1060,6 +1144,91 @@ UdpSocketDcqcn::ForwardUp6 (Ptr<Packet> packet, Ipv6Header header, uint16_t port
 {
   NS_LOG_FUNCTION (this << packet << header.GetSource () << port);
 
+#ifdef RDMA_RECV
+
+  // 由于rdma并不区分ipv4和ipv6，所以ForwardUp6基本和ForwardUp4一致
+
+  // 跳过判断坏包部分
+  // if(m_receiveErrorModel && m_receiveErrorModel->IsCorrupt(packet)) {
+
+  // }
+  
+  // 这里它原来是利用RemoveHeader获取的header，但是我们这里已经有header了，就用给的🤔
+  // 问题是，IPv6Header没有protocol……
+  uint8_t protocol = 0;
+  // uint8_t protocol = header.GetProtocol ();
+  if((protocol != 0xFF && protocol != 0xFD && protocol != 0xFC) 
+  // || m_node->GetNodeType() > 0
+  ) {
+    // This is not QCN feedback, not NACK, or I am a switch I don't care
+    if(protocol != 0xFE) {  // not PFC
+      // packet->AddPacketTag(FlowIdTag(m_ifIndex));
+      // if(m_node->GetNodeType() == 0) {  // NIC
+        // we donot have getNodeType()! so I suppose we are NIC
+        if(protocol == 17) {  // look at udp only
+          //! 这个其实是有的，但是unused，所以注释了，不然编译不了
+          // uint16_t ecnbits = header.GetEcn();
+          UdpHeader udph;
+          packet->RemoveHeader (udph);
+          // SeqTsHeader sth; // we don't have SeqTsHeader
+          // p->PeekHeader (sth);
+          packet->AddHeader (udph);
+
+          bool found = false;
+          // uint32_t i, key = 0;
+
+          // 我们没有m_ecn_source，摆了
+          // for(i=0; i<m_ecn_source->size(); ++i) {
+            // ...
+          // }
+
+          if(!found) {
+            // 同上，什么都做不了
+            // ...
+          }
+
+          // 下面的还是需要SeqTsHeader的，我麻了
+          // ...
+        }
+
+      // 这个自然也没有😇，不过其实下面的分支好像经常用到，这个应该才是实际的发送？
+      // PointToPointReceive(packet);
+      } else {  // If this is a Pause, stop the corresponding queue
+        // 不做PFC
+        NS_ASSERT("我们不做PFC" == nullptr);
+      }
+    } else if(protocol == 0xFF) { // QCN on NIC
+      // This is a Congestion signal
+      // Then, extract data from the congestion packet.
+      // We assume, without verify, the packet is destinated to me
+      
+      // 这里实际上是要用CnHeader的，但我们没有，就只能先这样了
+      Ipv6Header ipv6h;
+      packet->Copy()->RemoveHeader(ipv6h);
+      // uint32_t qIndex = 
+      // if(qIndex==1) return;  // DCTCP
+      // uint32_t udpport = ipv4h.GetFlow();
+      // uint16_t ecnbits = ipv4h.GetECNBits();
+      // ... 这里一大段都是要CnHeader的，改不动
+      // 涉及到m_queue, m_rate, m_rateALL, m_targetRate等
+
+    } else if(protocol == 0xFD) { // NACK on NIC
+      // qbbHeader qbbh;
+      // packet->Copy()->RemoveHeader(qbbh);
+      // ... 这里一大段都是要qbbHeader的，改不动
+      // 涉及到m_queue, m_findex_udpport_map, m_seddingBuffer
+      // , m_chunk, m_waitAck, m_waitingAck, m_nextAvail, m_retransmit
+      //todo 这里涉及到了m_nextAvail，应该是个重点
+    } else if(protocol == 0xFC) { // ACK on NIC
+      // qbbHeader qbbh;
+      // p->Copy()->RemoveHeader(qbbh);
+      // ... 没qbbHeader改不动
+      // 涉及到m_queue, m_findex_udpport_map, m_sendingBuffer, m_nextAvail
+      // , m_ack_interval, m_backto0, m_chunk, m_waitAck, m_miletone_tx
+      //todo 这里涉及到了m_nextAvail，应该是个重点
+    }
+
+#else
   if (m_shutdownRecv)
     {
       return;
@@ -1113,6 +1282,7 @@ UdpSocketDcqcn::ForwardUp6 (Ptr<Packet> packet, Ipv6Header header, uint16_t port
       NS_LOG_WARN ("No receive buffer space available.  Drop.");
       m_dropTrace (packet);
     }
+#endif
 }
 
 void
