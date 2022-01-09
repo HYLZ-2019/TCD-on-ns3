@@ -151,24 +151,28 @@ std::string qdiscTypeId = "ns3::LosslessQueueDisc";
 void
 CheckQueueSize (Ptr<QueueDisc> queue)
 {
-  for (int num=0; num<n; num++){
-    queue = qd.Get(num);
-    uint32_t qSize = queue->GetCurrentSize ().GetValue ();
-
-    std::ofstream fPlotQueue (std::stringstream (dir + "queue-size-" + std::to_string(num) + ".dat").str ().c_str (), std::ios::out | std::ios::app);
-    fPlotQueue << Simulator::Now ().GetSeconds () << " " << qSize <<" On: [";
-    
-    Ptr<ns3::Node> node = nodes.Get(num);
-    uint32_t d = node -> GetNDevices();
-    for (uint32_t i = 0; i + 1 != d; ++i) {
-      Ptr<NetDevice> dev = node -> GetDevice (i);
-      fPlotQueue << "Device " << i << ":" << queue->onoffTable->getValue(dev->GetAddress()) << " ";
-    }
-    fPlotQueue << "]\n";
-    fPlotQueue.close ();
+  int queue_num = 0;
+  for (int i = 0; i < n; ++i) {
+    Ptr<ns3::Node> node = nodes.Get(i);
+    uint32_t num = node -> GetNDevices();
+    for (uint32_t k = 0; k + 1 != num; ++k) {
+      Ptr<NetDevice> dev = node -> GetDevice (k);
+      // Output queue statics for every queue (~every device)
+      queue = qd.Get(queue_num);
+      uint32_t qSize = queue->GetCurrentSize ().GetValue ();
+      std::ofstream fPlotQueue (std::stringstream (dir + "queue-" + std::to_string(i) + "-" + std::to_string(k) + ".dat").str ().c_str (), std::ios::out | std::ios::app);
+      fPlotQueue << Simulator::Now ().GetSeconds () << " " << qSize <<" ";
+      bool on = queue->onoffTable->getValue(dev->GetAddress());
+      if (on){
+        fPlotQueue << "[ON]\n";
+      }
+      else{
+        fPlotQueue << "[OFF]\n";
+      }
+      fPlotQueue.close ();
+      queue_num ++;
+    }  // Check queue size every 1/100 of a second
   }
-  qd.Get(0)->onoffTable->printAll();
-  // Check queue size every 1/100 of a second
   Simulator::Schedule (Seconds (1), &CheckQueueSize, queue);
 }
 
