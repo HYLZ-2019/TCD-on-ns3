@@ -446,6 +446,7 @@ UdpSocketImpl::Send (Ptr<Packet> p, uint32_t flags)
 int 
 UdpSocketImpl::DoSend (Ptr<Packet> p)
 {
+  //发之前看一下socket的local端地址
   NS_LOG_FUNCTION (this << p);
   if ((m_endPoint == 0) && (Ipv4Address::IsMatchingType(m_defaultAddress) == true))
     {
@@ -571,7 +572,7 @@ UdpSocketImpl::DoSendTo (Ptr<Packet> p, Ipv4Address dest, uint16_t port, uint8_t
 
   // Note that some systems will only send limited broadcast packets
   // out of the "default" interface; here we send it out all interfaces
-  if (dest.IsBroadcast ())
+  if (dest.IsBroadcast ()) //广播
     {
       if (!m_allowBroadcast)
         {

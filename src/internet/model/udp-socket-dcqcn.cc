@@ -477,15 +477,26 @@ UdpSocketDcqcn::DoSend (Ptr<Packet> p) /*TODO 替换成DCQCN的版本*/
 
   if (Ipv4Address::IsMatchingType (m_defaultAddress))
     {
-      return DoSendTo (p, Ipv4Address::ConvertFrom (m_defaultAddress), m_defaultPort, GetIpTos ());
+      return wrapDoSendTo (p, Ipv4Address::ConvertFrom (m_defaultAddress), m_defaultPort, GetIpTos ());
     }
   else if (Ipv6Address::IsMatchingType (m_defaultAddress))
     {
-      return DoSendTo (p, Ipv6Address::ConvertFrom (m_defaultAddress), m_defaultPort);
+      return wrapDoSendTo (p, Ipv6Address::ConvertFrom (m_defaultAddress), m_defaultPort);
     }
 
   m_errno = ERROR_AFNOSUPPORT;
   return(-1);
+}
+
+//TODO: 把DequeueAndTransmit()那一堆搬进来
+//你会从m_sedingBuffer里取出需要的p, dest, port, tos，然后调用DoSendTo
+
+
+int UdpSocket::wrapDoSendTo(Ptr<Packet> p, Ipv4Address dest, uint16_t port, uint8_t tos) {
+	//m_sendingBuffer
+	m_sedingBuffer.push_back(BufferItem(p, dest, port, tos)); //TODO:定义一下类型
+	
+	DequeueAndTransmit();
 }
 
 int
@@ -811,14 +822,14 @@ UdpSocketDcqcn::SendTo (Ptr<Packet> p, uint32_t flags, const Address &address)
       Ipv4Address ipv4 = transport.GetIpv4 ();
       uint16_t port = transport.GetPort ();
       uint8_t tos = transport.GetTos ();
-      return DoSendTo (p, ipv4, port, tos);
+      return wrapDoSendTo (p, ipv4, port, tos);
     }
   else if (Inet6SocketAddress::IsMatchingType (address))
     {
       Inet6SocketAddress transport = Inet6SocketAddress::ConvertFrom (address);
       Ipv6Address ipv6 = transport.GetIpv6 ();
       uint16_t port = transport.GetPort ();
-      return DoSendTo (p, ipv6, port);
+      return wrapDoSendTo (p, ipv6, port);
     }
   return -1;
 }
@@ -1004,139 +1015,62 @@ UdpSocketDcqcn::ForwardUp (Ptr<Packet> packet, Ipv4Header header, uint16_t port,
                           Ptr<Ipv4Interface> incomingInterface)
 {
   NS_LOG_FUNCTION (this << packet << header << port);
-#ifdef RDMA_RECV
-  // 跳过判断坏包部分
-  // if(m_receiveErrorModel && m_receiveErrorModel->IsCorrupt(packet)) {
-
-  // }
-  
-  // 这里它原来是利用RemoveHeader获取的header，但是我们这里已经有header了，就用给的🤔
-  uint8_t protocol = header.GetProtocol ();
-  if((protocol != 0xFF && protocol != 0xFD && protocol != 0xFC) 
-  // || m_node->GetNodeType() > 0
-  ) {
-    // This is not QCN feedback, not NACK, or I am a switch I don't care
-    if(protocol != 0xFE) {  // not PFC
-      // packet->AddPacketTag(FlowIdTag(m_ifIndex));
-      // if(m_node->GetNodeType() == 0) {  // NIC
-        // we donot have getNodeType()! so I suppose we are NIC
-        if(protocol == 17) {  // look at udp only
-          //! 这个其实是有的，但是unused，所以注释了，不然编译不了
-          // uint16_t ecnbits = header.GetEcn();  
-          UdpHeader udph;
-          packet->RemoveHeader (udph);
-          // SeqTsHeader sth; // we don't have SeqTsHeader
-          // p->PeekHeader (sth);
-          packet->AddHeader (udph);
-
-          bool found = false;
-          // uint32_t i, key = 0;
-
-          // 我们没有m_ecn_source，摆了
-          // for(i=0; i<m_ecn_source->size(); ++i) {
-            // ...
-          // }
-
-          if(!found) {
-            // 同上，什么都做不了
-            // ...
-          }
-
-          // 下面的还是需要SeqTsHeader的，我麻了
-          // ...
-        }
-
-      // 这个自然也没有😇，不过其实下面的分支好像经常用到，这个应该才是实际的发送？
-      // PointToPointReceive(packet);
-      } else {  // If this is a Pause, stop the corresponding queue
-        // 不做PFC
-        NS_ASSERT("我们不做PFC" == nullptr);
-      }
-    } else if(protocol == 0xFF) { // QCN on NIC
+	if (m_shutdownRecv) {
+		return;
+	}
+	
+	uint8_t protocol = header.GetProtocol ();
+	//protocol值17是UDP, 发包的时候，经过m_upd.send(UDPL4Protocol::send), protocol号全部是17
+	//需要改区别方法
+	bool isQCN = false;
+	if(!isQCN) { //如果是数据包
+		//收包
+		Address address = InetSocketAddress (header.GetSource (), port);
+		SocketAddressTag tag;
+		tag.SetAddress (address);
+		packet->AddPacketTag (tag);
+		m_deliveryQueue.push (packet);
+		m_rxAvailable += packet->GetSize ();
+		NotifyDataRecv ();
+		
+		//TODO:
+		//检查packet,如果有拥塞标记就往回发QCN,标记怎么打还没确定,要和TCLayer一致
+		//对应qddnetdevice里的CheckandSendQCN()
+		bool iscongested = false;
+		//TODO: 检查
+		
+		if (iscongested) {
+			//构造一个QCN包发出去
+			//发这个QCN包不受Traffic Control限制
+			Ptr<Packet> p; 
+			//参数需要编
+			m_udp -> Send (p->Copy (), addri, dest, m_endPoint->GetLocalPort (), port);
+		}
+	}
+	else { //如果是QCN
       // This is a Congestion signal
       // Then, extract data from the congestion packet.
       // We assume, without verify, the packet is destinated to me
-      
-      // 这里实际上是要用CnHeader的，但我们没有，就只能先这样了
-      Ipv4Header ipv4h;
-      packet->Copy()->RemoveHeader(ipv4h);
-      // uint32_t qIndex = 
-      // if(qIndex==1) return;  // DCTCP
-      // uint32_t udpport = ipv4h.GetFlow();
-      // uint16_t ecnbits = ipv4h.GetECNBits();
-      // ... 这里一大段都是要CnHeader的，改不动
-      // 涉及到m_queue, m_rate, m_rateALL, m_targetRate等
+		
+		//从包里抽出ecnbits
+		//TODO: ecnbits;
+	  
+		if (m_rate == 0) { //lazy initialization	
+			m_rate = m_bps;
+			for (uint32_t j = 0; j < maxHop; j++) {
+				m_rateAll[j] = m_bps;
+				m_targetRate[j] = m_bps;	//targetrate remembers the last rate
+			}
+		}
+		
+		if (ecnbits == 0x03) { //这应该是QCN的一部分
+			rpr_cnm_received(i, 0, qfb*1.0 / (total + 1)); //这是DCQCN的一部分，DCQCN的部分都要搬进来
+		}
 
-    } else if(protocol == 0xFD) { // NACK on NIC
-      // qbbHeader qbbh;
-      // packet->Copy()->RemoveHeader(qbbh);
-      // ... 这里一大段都是要qbbHeader的，改不动
-      // 涉及到m_queue, m_findex_udpport_map, m_seddingBuffer
-      // , m_chunk, m_waitAck, m_waitingAck, m_nextAvail, m_retransmit
-      //todo 这里涉及到了m_nextAvail，应该是个重点
-    } else if(protocol == 0xFC) { // ACK on NIC
-      // qbbHeader qbbh;
-      // p->Copy()->RemoveHeader(qbbh);
-      // ... 没qbbHeader改不动
-      // 涉及到m_queue, m_findex_udpport_map, m_sendingBuffer, m_nextAvail
-      // , m_ack_interval, m_backto0, m_chunk, m_waitAck, m_miletone_tx
-      //todo 这里涉及到了m_nextAvail，应该是个重点
-    }
-
-#else
-  if (m_shutdownRecv)
-    {
-      return;
-    }
-
-  // Should check via getsockopt ()..
-  if (IsRecvPktInfo ())
-    {
-      Ipv4PacketInfoTag tag;
-      packet->RemovePacketTag (tag);
-      tag.SetAddress (header.GetDestination ());
-      tag.SetTtl (header.GetTtl ());
-      tag.SetRecvIf (incomingInterface->GetDevice ()->GetIfIndex ());
-      packet->AddPacketTag (tag);
-    }
-
-  //Check only version 4 options
-  if (IsIpRecvTos ())
-    {
-      SocketIpTosTag ipTosTag;
-      ipTosTag.SetTos (header.GetTos ());
-      packet->AddPacketTag (ipTosTag);
-    }
-
-  if (IsIpRecvTtl ())
-    {
-      SocketIpTtlTag ipTtlTag;
-      ipTtlTag.SetTtl (header.GetTtl ());
-      packet->AddPacketTag (ipTtlTag);
-    }
-
-  // in case the packet still has a priority tag attached, remove it
-  SocketPriorityTag priorityTag;
-  packet->RemovePacketTag (priorityTag);
-
-  if ((m_rxAvailable + packet->GetSize ()) <= m_rcvBufSize)
-    {
-      Address address = InetSocketAddress (header.GetSource (), port);
-      m_deliveryQueue.push (std::make_pair (packet, address));
-      m_rxAvailable += packet->GetSize ();
-      NotifyDataRecv ();
-    }
-  else
-    {
-      // In general, this case should not occur unless the
-      // receiving application reads data from this socket slowly
-      // in comparison to the arrival rate
-      //
-      // drop and trace packet
-      NS_LOG_WARN ("No receive buffer space available.  Drop.");
-      m_dropTrace (packet);
-    }
-#endif
+		m_rate = m_bps;
+		for (uint32_t j = 0; j < maxHop; j++)
+			m_rate = std::min(m_rate, m_rateAll[j]);
+    } 
 }
 
 void 
