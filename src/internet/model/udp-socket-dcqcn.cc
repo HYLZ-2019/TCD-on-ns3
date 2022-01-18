@@ -1295,15 +1295,23 @@ void
 UdpSocketDcqcn::ForwardUp (Ptr<Packet> packet, Ipv4Header header, uint16_t port,
                           Ptr<Ipv4Interface> incomingInterface)
 {
-  NS_LOG_FUNCTION (this << packet << header << port);
+	NS_LOG_FUNCTION (this << packet << header << port);
 	if (m_shutdownRecv) {
 		return;
 	}
+	//准备用MyTag类型
+	//simple value值为1, 2, 3的情况对应TCD三元组
+	//QCN对应simple value的值是4的情况
+	
+	MyTag myTag;
+	packet -> remove(myTag);
+	uint8_t simpleValue = myTag.GetSimpleValue();
 	
 	uint8_t protocol = header.GetProtocol ();
 	//protocol值17是UDP, 发包的时候，经过m_upd.send(UDPL4Protocol::send), protocol号全部是17
 	//需要改区别方法
-	bool isQCN = false;
+	
+	bool isQCN = (simpleValue == 4);
 	if(!isQCN) { //如果是数据包
 		//收包
 		Address address = InetSocketAddress (header.GetSource (), port);
@@ -1317,13 +1325,18 @@ UdpSocketDcqcn::ForwardUp (Ptr<Packet> packet, Ipv4Header header, uint16_t port,
 		//TODO:
 		//检查packet,如果有拥塞标记就往回发QCN,标记怎么打还没确定,要和TCLayer一致
 		//对应qddnetdevice里的CheckandSendQCN()
-		bool iscongested = false;
+		bool iscongested;
 		//TODO: 检查
+		iscongested = (simpleValue == 2);
+		//认为1是non-con, 2是con, 3是undetermined
 		
 		if (iscongested) {
 			//构造一个QCN包发出去
 			//发这个QCN包不受Traffic Control限制
 			Ptr<Packet> p; 
+			MyTag qcnTag;
+			qcnTag.SetSimpleValue (4);
+			p -> AddPacketTag(qcnTag);
 			//参数需要编
 			m_udp -> Send (p->Copy (), addri, dest, m_endPoint->GetLocalPort (), port);
 		}
