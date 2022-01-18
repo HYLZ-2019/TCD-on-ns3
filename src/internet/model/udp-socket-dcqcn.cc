@@ -1299,19 +1299,48 @@ UdpSocketDcqcn::ForwardUp (Ptr<Packet> packet, Ipv4Header header, uint16_t port,
 	if (m_shutdownRecv) {
 		return;
 	}
-	//准备用MyTag类型
-	//simple value值为1, 2, 3的情况对应TCD三元组
-	//QCN对应simple value的值是4的情况
 	
+	  // Should check via getsockopt ()..
+	if (IsRecvPktInfo ())
+	{
+	  Ipv4PacketInfoTag tag;
+	  packet->RemovePacketTag (tag);
+	  tag.SetAddress (header.GetDestination ());
+	  tag.SetTtl (header.GetTtl ());
+	  tag.SetRecvIf (incomingInterface->GetDevice ()->GetIfIndex ());
+	  packet->AddPacketTag (tag);
+	}
+
+	//Check only version 4 options
+	if (IsIpRecvTos ())
+	{
+	  SocketIpTosTag ipTosTag;
+	  ipTosTag.SetTos (header.GetTos ());
+	  packet->AddPacketTag (ipTosTag);
+	}
+
+	if (IsIpRecvTtl ())
+	{
+	  SocketIpTtlTag ipTtlTag;
+	  ipTtlTag.SetTtl (header.GetTtl ());
+	  packet->AddPacketTag (ipTtlTag);
+	}
+
+	// in case the packet still has a priority tag attached, remove it
+	SocketPriorityTag priorityTag;
+	packet->RemovePacketTag (priorityTag);
+	
+	//uint8_t protocol = header.GetProtocol ();
+	//protocol值17是UDP, 发包的时候，经过m_upd.send(UDPL4Protocol::send), protocol号全部是17
+	
+	//准备用MyTag类型
+	//simple value值为1, 2, 3的情况对应TCD三元组 其中3是congestion
+	//QCN对应simple value的值是4的情况
 	MyTag myTag;
 	packet -> remove(myTag);
 	uint8_t simpleValue = myTag.GetSimpleValue();
 	
-	uint8_t protocol = header.GetProtocol ();
-	//protocol值17是UDP, 发包的时候，经过m_upd.send(UDPL4Protocol::send), protocol号全部是17
-	//需要改区别方法
-	
-	bool isQCN = (simpleValue == 4);
+	bool isQCN = ((simpleValue & 4) != 0);
 	if(!isQCN) { //如果是数据包
 		//收包
 		Address address = InetSocketAddress (header.GetSource (), port);
@@ -1322,13 +1351,12 @@ UdpSocketDcqcn::ForwardUp (Ptr<Packet> packet, Ipv4Header header, uint16_t port,
 		m_rxAvailable += packet->GetSize ();
 		NotifyDataRecv ();
 		
-		//TODO:
 		//检查packet,如果有拥塞标记就往回发QCN,标记怎么打还没确定,要和TCLayer一致
 		//对应qddnetdevice里的CheckandSendQCN()
 		bool iscongested;
 		//TODO: 检查
-		iscongested = (simpleValue == 2);
-		//认为1是non-con, 2是con, 3是undetermined
+		iscongested = (simpleValue == 3);
+		//认为1是non-con, 2是undetermined, 3是con
 		
 		if (iscongested) {
 			//构造一个QCN包发出去
@@ -1338,7 +1366,9 @@ UdpSocketDcqcn::ForwardUp (Ptr<Packet> packet, Ipv4Header header, uint16_t port,
 			qcnTag.SetSimpleValue (4);
 			p -> AddPacketTag(qcnTag);
 			//参数需要编
-			m_udp -> Send (p->Copy (), addri, dest, m_endPoint->GetLocalPort (), port);
+			Ipv4Address ipv4 = header.GetSource();
+			DoSendTo (p, ipv4, port);
+			//DoSendTo就直接发包了 m_udp -> Send (p->Copy (), addri, dest, m_endPoint->GetLocalPort (), port);
 		}
 	}
 	else { //如果是QCN
@@ -1348,6 +1378,7 @@ UdpSocketDcqcn::ForwardUp (Ptr<Packet> packet, Ipv4Header header, uint16_t port,
 		
 		//从包里抽出ecnbits
 		//TODO: ecnbits;
+		uint16_t ecnbits = simpleValue & 3;
 	  
 		if (m_rate == 0) { //lazy initialization	
 			m_rate = m_bps;
