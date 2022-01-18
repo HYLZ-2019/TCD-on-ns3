@@ -490,11 +490,292 @@ UdpSocketDcqcn::DoSend (Ptr<Packet> p) /*TODO 替换成DCQCN的版本*/
 
 //TODO: 把DequeueAndTransmit()那一堆搬进来
 //你会从m_sedingBuffer里取出需要的p, dest, port, tos，然后调用DoSendTo
+void
+UdpSocketDcqcn::TransmitComplete(void) {
+	NS_LOG_FUNCTION(this);
+	NS_ASSERT_MSG(m_txMachineState == BUSY, "Must be BUSY if transmitting");
+	m_txMachineState = READY;
+	NS_ASSERT_MSG(m_currentPkt != 0, "QbbNetDevice::TransmitComplete(): m_currentPkt zero");
+	m_currentPkt = 0;
+	DequeueAndTransmit();
+}
+
+void 
+UdpSocketDcqcn::TransmitStart(Ptr<Packet> p) {
+	NS_LOG_FUNCTION(this << p);
+	NS_LOG_LOGIC("UID is " << p->GetUid() << ")");
+	//
+	// This function is called to start the process of transmitting a packet.
+	// We need to tell the channel that we've started wiggling the wire and
+	// schedule an event that will be executed when the transmission is complete.
+	//
+	NS_ASSERT_MSG(m_txMachineState == READY, "Must be READY to transmit");
+	m_txMachineState = BUSY;
+	m_currentPkt = p;
+	//m_phyTxBeginTrace(m_currentPkt);
+	Time txTime = Seconds(m_bps.CalculateTxTime(p->GetSize()));
+	Time txCompleteTime = txTime + m_tInterframeGap;
+	NS_LOG_LOGIC("Schedule TransmitCompleteEvent in " << txCompleteTime.GetSeconds() << "sec");
+	Simulator::Schedule(txCompleteTime, &UdpSocketDcqcn::TransmitComplete, this);
+}
+
+
+//DCQCN的速率调整部分
+	void
+		UdpSocketDcqcn::rpr_adjust_rates(uint32_t hop)
+	{
+		AdjustRates(hop, DataRate("0bps"));
+		rpr_fast_recovery(hop);
+		return;
+	}
+
+	void
+		UdpSocketDcqcn::rpr_fast_recovery(uint32_t hop)
+	{
+		m_rpStage[hop] = 1;
+		return;
+	}
+
+
+	void
+		UdpSocketDcqcn::rpr_active_increase(uint32_t hop)
+	{
+		AdjustRates(hop, m_rai);
+		m_rpStage[hop] = 2;
+	}
+
+
+	void
+		UdpSocketDcqcn::rpr_active_byte(uint32_t hop)
+	{
+		m_rpByteStage[hop]++;
+		m_txBytes[hop] = m_bc;
+		rpr_active_increase(hop);
+	}
+
+	void
+		UdpSocketDcqcn::rpr_active_time(uint32_t hop)
+	{
+		m_rpTimeStage[hop]++;
+		m_rpWhile[hop] = m_rpgTimeReset;
+		Simulator::Cancel(m_rptimer[hop]);
+		m_rptimer[hop] = Simulator::Schedule(MicroSeconds(m_rpWhile[hop]), &UdpSocketDcqcn::rpr_timer_wrapper, this, hop);
+		rpr_active_select(hop);
+	}
+
+
+	void
+		UdpSocketDcqcn::rpr_fast_byte(uint32_t hop)
+	{
+		m_rpByteStage[hop]++;
+		m_txBytes[hop] = m_bc;
+		if (m_rpByteStage[hop] < m_rpgThreshold)
+		{
+			rpr_adjust_rates(hop);
+		}
+		else
+		{
+			rpr_active_select(hop);
+		}
+			
+		return;
+	}
+
+	void
+		UdpSocketDcqcn::rpr_fast_time(uint32_t hop)
+	{
+		m_rpTimeStage[hop]++;
+		m_rpWhile[hop] = m_rpgTimeReset;
+		Simulator::Cancel(m_rptimer[hop]);
+		m_rptimer[hop] = Simulator::Schedule(MicroSeconds(m_rpWhile[hop]), &UdpSocketDcqcn::rpr_timer_wrapper, this, hop);
+		if (m_rpTimeStage[hop] < m_rpgThreshold)
+			rpr_adjust_rates(hop);
+		else
+			rpr_active_select(hop);
+		return;
+	}
+
+
+	void
+		UdpSocketDcqcn::rpr_hyper_byte(uint32_t hop)
+	{
+		m_rpByteStage[hop]++;
+		m_txBytes[hop] = m_bc / 2;
+		rpr_hyper_increase(hop);
+	}
+
+
+	void
+		UdpSocketDcqcn::rpr_hyper_time(uint32_t hop)
+	{
+		m_rpTimeStage[hop]++;
+		m_rpWhile[hop] = m_rpgTimeReset / 2;
+		Simulator::Cancel(m_rptimer[hop]);
+		m_rptimer[hop] = Simulator::Schedule(MicroSeconds(m_rpWhile[hop]), &UdpSocketDcqcn::rpr_timer_wrapper, this, hop);
+		rpr_hyper_increase(hop);
+	}
+
+
+	void
+		UdpSocketDcqcn::rpr_active_select(uint32_t hop)
+	{
+		if (m_rpByteStage[hop] < m_rpgThreshold || m_rpTimeStage[hop] < m_rpgThreshold)
+			rpr_active_increase(hop);
+		else
+			rpr_hyper_increase(hop);
+		return;
+	}
+
+
+	void
+		UdpSocketDcqcn::rpr_hyper_increase(uint32_t hop)
+	{
+		AdjustRates(hop, m_rhai*(std::min(m_rpByteStage[hop], m_rpTimeStage[hop]) - m_rpgThreshold + 1));
+		m_rpStage[hop] = 3;
+		return;
+	}
+
+	void
+		UdpSocketDcqcn::AdjustRates(uint32_t hop, DataRate increase)
+	{
+		if (((m_rpByteStage[hop] == 1) || (m_rpTimeStage[hop] == 1)) && (m_targetRate[hop] > 10 * m_rateAll[hop]))
+			m_targetRate[hop] /= 8;
+		else
+			m_targetRate[hop] += increase;
+
+		m_rateAll[hop] = (m_rateAll[hop] / 2) + (m_targetRate[hop] / 2);
+
+		if (m_rateAll[hop] > m_bps)
+			m_rateAll[hop] = m_bps;
+
+		m_rate = m_bps;
+		for (uint32_t j = 0; j < maxHop; j++)
+			m_rate = std::min(m_rate, m_rateAll[j]);
+		return;
+	}
+
+	void
+		UdpSocketDcqcn::rpr_cnm_received(uint32_t hop, double fraction)
+	{
+		if (!m_EcnClampTgtRateAfterTimeInc && !m_EcnClampTgtRate)
+		{
+			if (m_rpByteStage[hop] != 0)
+			{
+				m_targetRate[hop] = m_rateAll[hop];
+				m_txBytes[hop] = m_bc;
+			}
+		}
+		else if (m_EcnClampTgtRate)
+		{
+			m_targetRate[hop] = m_rateAll[hop];
+			m_txBytes[hop] = m_bc; //for fluid model, QCN standard doesn't have this.
+		}
+		else
+		{
+			if (m_rpByteStage[hop] != 0 || m_rpTimeStage[hop] != 0)
+			{
+				m_targetRate[hop] = m_rateAll[hop];
+				m_txBytes[hop] = m_bc;
+			}
+		}
+		m_rpByteStage[hop] = 0;
+		m_rpTimeStage[hop] = 0;
+		//m_alpha[findex][hop] = (1-m_g)*m_alpha[findex][hop] + m_g*fraction;
+		m_alpha[hop] = (1 - m_g)*m_alpha[hop] + m_g; 	//binary feedback
+		m_rateAll[hop] = std::max(m_minRate, m_rateAll[hop] * (1 - m_alpha[hop] / 2));
+		Simulator::Cancel(m_resumeAlpha[hop]);
+		m_resumeAlpha[hop] = Simulator::Schedule(MicroSeconds(m_alpha_resume_interval), &UdpSocketDcqcn::ResumeAlpha, this, hop);
+		m_rpWhile[hop] = m_rpgTimeReset;
+		Simulator::Cancel(m_rptimer[hop]);
+		m_rptimer[hop] = Simulator::Schedule(MicroSeconds(m_rpWhile[hop]), &UdpSocketDcqcn::rpr_timer_wrapper, this, hop);
+		rpr_fast_recovery(hop);
+	}
+
+	void
+		UdpSocketDcqcn::rpr_timer_wrapper(uint32_t hop)
+	{
+		if (m_rpStage[hop] == 1)
+		{
+			rpr_fast_time(hop);
+		}
+		else if (m_rpStage[hop] == 2)
+		{
+			rpr_active_time(hop);
+		}
+		else if (m_rpStage[hop] == 3)
+		{
+			rpr_hyper_time(hop);
+		}
+		return;
+	}
+
+	void
+		UdpSocketDcqcn::ResumeAlpha(uint32_t hop)
+	{
+		m_alpha[hop] = (1 - m_g)*m_alpha[hop];
+		Simulator::Cancel(m_resumeAlpha[hop]);
+		m_resumeAlpha[hop] = Simulator::Schedule(MicroSeconds(m_alpha_resume_interval), &UdpSocketDcqcn::ResumeAlpha, this, hop);
+	}
+//DCQCN的速率调整部分
+void
+UdpSocketDcqcn::DequeueAndTransmit(void) {
+	NS_LOG_FUNCTION(this);
+	if (m_txMachineState == BUSY) return;	// Quit if channel busy
+	
+	//没有要发的包了，return
+	if (m_sendingBuffer.empty()) return;
+	
+	if (m_nextAvail <= Simulator::GetMaximumSimulationTime()) { //立刻发包
+		if (m_rate == 0) {			//late initialization	
+			m_rate = m_bps;
+			for (uint32_t j = 0; j < maxHop; j++) {
+				m_rateAll[j] = m_bps, m_targetRate[j] = m_bps;
+			}
+		}
+		double creditsDue = std::max(0.0, m_bps / m_rate * (p->GetSize() - m_credits));
+		Time nextSend = m_tInterframeGap + Seconds(m_bps.CalculateTxTime(creditsDue));
+		m_nextAvail = Simulator::Now() + nextSend;
+
+		m_credits = 0;	//reset credits
+		for (uint32_t i = 0; i < 1; i++)
+		{
+			if (m_rpStage[i] > 0) m_txBytes[i] -= p->GetSize();
+			else m_txBytes[i] = m_bc;
+			if (m_txBytes[i] < 0) {
+				if (m_rpStage[i] == 1) {
+					rpr_fast_byte(i);
+				}
+				else if (m_rpStage[i] == 2) {
+					rpr_active_byte(i);
+				}
+				else if (m_rpStage[i] == 3) {
+					rpr_hyper_byte(i);
+				}
+			}
+		}
+		
+		BufferItem item = m_sendingBuffer.pop();
+		TransmitStart(item.p);
+		DoSendTo(item.p, item.dest, item.port, item.tos);
+		return;
+	}
+	
+	//不能立刻发的预约一下
+	if (m_nextSend.IsExpired() &&
+		m_nextAvail < Simulator::GetMaximumSimulationTime() &&
+		m_nextAvail.GetTimeStep() > Simulator::Now().GetTimeStep()) {
+		NS_LOG_LOGIC("Next DequeueAndTransmit at " << t << " or " << (t - Simulator::Now()) << " later");
+		NS_ASSERT(t > Simulator::Now());
+		m_nextSend = Simulator::Schedule(t - Simulator::Now(), &UdpSocketDcqcn::DequeueAndTransmit, this);
+	}
+
+	return;
+}
 
 
 int UdpSocket::wrapDoSendTo(Ptr<Packet> p, Ipv4Address dest, uint16_t port, uint8_t tos) {
 	//m_sendingBuffer
-	m_sedingBuffer.push_back(BufferItem(p, dest, port, tos)); //TODO:定义一下类型
+	m_sedingBuffer.push(BufferItem(p, dest, port, tos)); //TODO:定义一下类型
 	
 	DequeueAndTransmit();
 }

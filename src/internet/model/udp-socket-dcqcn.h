@@ -33,6 +33,18 @@ class Ipv6Interface;
  * to ns3's implementation of UDP.
  */
 //这个DCQCN的原型是IMPL,我们需要做的是把send, receive替换成带有拥塞控制的版本，如果有新的数据结构就放到这个类里
+class BufferItem{ //定义Item类型方便管理
+public:
+	Ptr<Packet> p;
+	Ipv4Address dest;
+	uint16_t port; 
+	uint8_t tos;
+	BufferItem(Ptr<Packet> _p, Ipv4Address _dest, uint16_t _port, uint8_t _tos) {
+		p = _p, dest = _dest, port = _port, tos = _tos;
+	}
+};
+
+
 class UdpSocketDcqcn : public UdpSocket
 {
 public:
@@ -226,6 +238,39 @@ private:
   int32_t m_ipMulticastIf;  //!< Multicast Interface
   bool m_ipMulticastLoop;   //!< Allow multicast loop
   bool m_mtuDiscover;       //!< Allow MTU discovery
+  
+  //加入新组件sendingBuffer
+  std :: queue <BufferItem> m_sedingBuffer;
+  
+  EventId m_resumeAlpha[maxHop];
+  DataRate m_rateAll[maxHop];
+
+  DataRate m_targetRate[maxHop];	//< Target rate
+  DataRate m_rate;	//< Current rate
+  int64_t  m_txBytes[maxHop];	//< Tx byte counter
+  double  m_rpWhile[maxHop];	//< Tx byte counter
+  uint32_t m_rpByteStage[maxHop];	//< Count of Tx-based rate increments
+  uint32_t m_rpTimeStage[maxHop];
+  uint32_t m_rpStage[maxHop]; //1: fr; 2: ai; 3: hi
+  Time     m_nextAvail;	//< Soonest time of next send
+  double   m_credits;	//< Credits accumulated
+  EventId m_rateIncrease; // rate increase event (QCN)
+  
+  void ResumeAlpha(uint32_t hop);
+  void AdjustRates(uint32_t hop, DataRate increase);
+  void rpr_adjust_rates(uint32_t hop);
+  void rpr_fast_recovery(uint32_t hop);
+  void rpr_active_increase(uint32_t hop);
+  void rpr_active_byte(uint32_t hop);
+  void rpr_active_time(uint32_t hop);
+  void rpr_fast_byte(uint32_t hop);
+  void rpr_fast_time(uint32_t hop);
+  void rpr_hyper_byte(uint32_t hop);
+  void rpr_hyper_time(uint32_t hop);
+  void rpr_active_select(uint32_t hop);
+  void rpr_hyper_increase(uint32_t hop);
+  void rpr_cnm_received(uint32_t hop, double fraction);
+  void rpr_timer_wrapper(uint32_t hop);
 };
 
 } // namespace ns3
