@@ -22,7 +22,7 @@
 #include "lossless-queue-disc.h"
 #include "ns3/object-factory.h"
 #include "ns3/drop-tail-queue.h"
-
+#include "ns3/ipv4-static-routing.h"
 
 
 
@@ -76,7 +76,7 @@ LosslessQueueDisc::DoEnqueue (Ptr<QueueDiscItem> item)
 
   if (GetCurrentSize () > qlenUpperBound)
     {
-      std::cout << "Device " << this << " tries to turn OFF\n";
+      //std::cout << "Device " << this << " tries to turn OFF\n";
         //TODO: 标记全局表中它的device为off。
       std :: set <Address> :: iterator it = mda.begin();
       for (; it != mda.end(); ++it) 
@@ -108,6 +108,20 @@ LosslessQueueDisc::DoDequeue (void)
     }
 
     Address destMAC = item -> GetAddress();
+    Ptr<Packet> p = item->GetPacket();//->Copy(); // Working on a copy.
+    std::cout << "cout<<packet: \n";
+    std::cout << p;
+    //p->GetIpv4Header(std::cout);
+    std::cout << "p->print: [";
+    p->Print(std::cout);
+    std::cout << "]\n";
+    std::cout << "item->print: [";
+    item->Print(std::cout);
+    std::cout << "]\n";
+    
+    /*std::cout << p << std::endl;*/
+    /*Ptr<Ipv4Route> route = Ipv4StaticRouting::RouteOutput(item->GetPacket(), )*/
+    std::cout << "Packet with GetAddress() == " << destMAC << std::endl;
     bool destOff = ! onoffTable -> getValue(destMAC); 
     
     if (destOff) {
@@ -124,7 +138,7 @@ LosslessQueueDisc::DoDequeue (void)
   Ptr<QueueDiscItem> realitem = GetInternalQueue (0)->Dequeue (); // not const
 
   if (GetCurrentSize() <= qlenLowerBound) {
-    std::cout << "Device " << this << " tries to turn ON\n";
+    //std::cout << "Device " << this << " tries to turn ON\n";
     /*TODO: 找到这个node上所有的device, 标记ON*/
     std :: set <Address> :: iterator it = mda.begin();
     for (; it != mda.end(); ++it) 
@@ -140,6 +154,7 @@ LosslessQueueDisc::DoDequeue (void)
   }
 
   //std::cout << "Returning item: " << realitem << "\n";
+  //std::cout<< "realitem GetAddress(): " << realitem->GetAddress()<<std::endl;
   return realitem;
 }
 

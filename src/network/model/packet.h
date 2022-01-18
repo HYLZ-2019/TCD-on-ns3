@@ -487,6 +487,13 @@ public:
   void Print (std::ostream &os) const;
 
   /**
+   * @brief Find an Ipv4Header from the packet.
+   * 
+   * @param os 
+   */
+  void GetIpv4Header(std::ostream& os);
+
+  /**
    * \brief Return a string representation of the packet
    *
    * An empty string is returned if you haven't called EnablePrinting ()

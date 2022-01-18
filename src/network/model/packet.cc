@@ -23,6 +23,7 @@
 #include "ns3/simulator.h"
 #include <string>
 #include <cstdarg>
+#include "ns3/ipv4-static-routing.h"
 
 namespace ns3 {
 
@@ -560,6 +561,71 @@ Packet::Print (std::ostream &os) const
         }
     }
 #endif
+}
+
+void
+Packet::GetIpv4Header (std::ostream& os) {
+  os << "In GetIpv4Header\n";
+  PacketMetadata::ItemIterator i = m_metadata.BeginItem (m_buffer);
+  while (i.HasNext ())
+    {
+      os << "Next~\n";
+      PacketMetadata::Item item = i.Next ();
+      if (item.isFragment)
+        {
+          // Pretend this branch won't be used.
+          continue;
+        }
+      else
+        {
+          os << "item.type: " << item.type << "\n";
+          switch (item.type) {
+            case PacketMetadata::Item::PAYLOAD:
+              os << "Payload (size=" << item.currentSize << ")";
+              break;
+            case PacketMetadata::Item::HEADER:
+            case PacketMetadata::Item::TRAILER:
+              os << "item.tid.GetName(): " << item.tid.GetName () << " (";
+              {
+                NS_ASSERT (item.tid.HasConstructor ());
+                Callback<ObjectBase *> constructor = item.tid.GetConstructor ();
+                NS_ASSERT (!constructor.IsNull ());
+                ObjectBase *instance = constructor ();
+                NS_ASSERT (instance != 0);
+                Chunk *chunk = dynamic_cast<Chunk *> (instance);
+                NS_ASSERT (chunk != 0);
+                if (item.type == PacketMetadata::Item::HEADER)
+                  {
+                    os << "\nHeader:\n";
+                    Buffer::Iterator end = item.current;
+                    end.Next (item.currentSize); // move from start 
+                    chunk->Deserialize (item.current, end);
+                  }
+                else if (item.type == PacketMetadata::Item::TRAILER)
+                  {
+                    os << "\nTrailer:\n";
+                    Buffer::Iterator start = item.current;
+                    start.Prev (item.currentSize); // move from end
+                    chunk->Deserialize (start, item.current);
+                  }
+                else
+                  {
+                    os << "\nNon-header-nor-trailer:\n";
+                    chunk->Deserialize (item.current);
+                  }    
+                chunk->Print (os);
+                delete chunk;
+              }
+              os << ")";
+              break;
+            }
+        }
+      if (i.HasNext ())
+        {
+          os << " ";
+        }
+    }
+    return;
 }
 
 PacketMetadata::ItemIterator 

@@ -92,6 +92,10 @@ FifoQueueDisc::DoDequeue (void)
       return 0;
     }
 
+    Address destMAC = item -> GetAddress();
+
+    std::cout << "Packet with GetAddress() == " << destMAC << std::endl;
+
   return item;
 }
 

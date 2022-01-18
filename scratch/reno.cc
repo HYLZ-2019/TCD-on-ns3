@@ -345,7 +345,8 @@ int main (int argc, char *argv[])
     uint32_t num = node -> GetNDevices();
     for (uint32_t k = 0; k + 1 != num; ++k) {
       Ptr<QueueDisc> queue= qd.Get(queue_num);
-      myfile << "Stat for Queue " << i << "-" << k << ":";
+      myfile << "Stat for Queue " << i << "-" << k << ":\n";
+      myfile << "Device MAC address: " << node->GetDevice(k)->GetAddress();
       myfile << qd.Get (queue_num)->GetStats ();
       queue_num ++;
     }  // Check queue size every 1/100 of a second
