@@ -37,6 +37,7 @@
 #include "ns3/error-model.h"
 #include "ns3/flow-id-tag.h"
 #include "ns3/udp-header.h"
+#include "ns3/simulator.h"
 #include "udp-socket-dcqcn.h"
 #include "udp-l4-protocol.h"
 #include "ipv4-end-point.h"

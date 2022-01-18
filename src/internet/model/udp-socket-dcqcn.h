@@ -11,6 +11,7 @@
 #include "ns3/ipv4-address.h"
 #include "ns3/udp-socket.h"
 #include "ns3/ipv4-interface.h"
+#include "ns3/data-rate.h"
 #include "icmpv4.h" //这个是原来ICMP包的报头，可以考虑复用或者替换
 
 namespace ns3 {
