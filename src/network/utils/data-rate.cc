@@ -231,6 +231,21 @@ DataRate& DataRate::operator *= (double rhs)
   return *this;
 }
 
+DataRate DataRate::operator / (double rhs)
+{
+  return DataRate(((uint64_t)(m_bps / rhs)));
+}
+
+DataRate& DataRate::operator /= (double rhs)
+{
+  m_bps /= rhs;
+  return *this;
+}
+
+DataRate operator / (double lhs, DataRate& rhs) {
+  return DataRate(((uint64_t)(lhs / rhs.m_bps)));
+}
+
 DataRate DataRate::operator * (uint64_t rhs)
 {
   return DataRate(m_bps * rhs);

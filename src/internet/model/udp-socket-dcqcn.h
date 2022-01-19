@@ -12,6 +12,9 @@
 #include "ns3/udp-socket.h"
 #include "ns3/ipv4-interface.h"
 #include "ns3/data-rate.h"
+#include "ns3/tag.h"
+#include "ns3/packet.h"
+#include "ns3/uinteger.h"
 #include "icmpv4.h" //这个是原来ICMP包的报头，可以考虑复用或者替换
 
 namespace ns3 {
@@ -126,6 +129,10 @@ private:
    */
   int FinishBind (void);
 
+  void DequeueAndTransmit(void);
+  void TransmitStart(Ptr<Packet> p);
+  void TransmitComplete(void);
+
   /**
    * \brief Called by the L3 protocol when it received a packet to pass on to TCP.
    *
@@ -182,6 +189,8 @@ private:
    * \returns 0 on success, -1 on failure
    */
   int DoSendTo (Ptr<Packet> p, Ipv4Address daddr, uint16_t dport, uint8_t tos);
+  int DoSendTo (Ptr<Packet> p, Ipv4Address daddr, uint16_t dport);
+  int wrapDoSendTo(Ptr<Packet> p, Ipv4Address dest, uint16_t port, uint8_t tos);  // why wrap?
   /**
    * \brief Send a packet to a specific destination and port (IPv6)
    * \param p packet
@@ -190,6 +199,7 @@ private:
    * \returns 0 on success, -1 on failure
    */
   int DoSendTo (Ptr<Packet> p, Ipv6Address daddr, uint16_t dport);
+  int wrapDoSendTo(Ptr<Packet> p, Ipv6Address dest, uint16_t port); 
 
   /**
    * \brief Called by the L3 protocol when it received an ICMP packet to pass on to TCP.
@@ -212,6 +222,39 @@ private:
    * \param icmpInfo the ICMP Info
    */
   void ForwardIcmp6 (Ipv6Address icmpSource, uint8_t icmpTtl, uint8_t icmpType, uint8_t icmpCode, uint32_t icmpInfo);
+
+   /**
+   * Enumeration of the states of the transmit machine of the net device.
+   */
+  enum TxMachineState
+  {
+    READY,   /**< The transmitter is ready to begin transmission of a packet */
+    BUSY,    /**< The transmitter is busy transmitting a packet */
+    GAP,      /**< The transmitter is in the interframe gap time */
+    BACKOFF      /**< The transmitter is waiting for the channel to be free */
+  };
+
+  /**
+   * The state of the Net Device transmit state machine.
+   * \see TxMachineState
+   */
+  TxMachineState m_txMachineState;
+  Ptr<Packet> m_currentPkt;
+  uint64_t       m_bps;
+  Time m_tInterframeGap;
+  double m_rpgTimeReset;
+  EventId m_rptimer[maxHop];  // 去掉了fcnt
+  uint32_t m_rpgThreshold;
+  DataRate m_rai;		//< Rate of additive increase
+  DataRate m_rhai;		//< Rate of hyper-additive increase
+  DataRate m_minRate;		//< Min sending rate
+  uint32_t m_bc;
+  bool m_EcnClampTgtRateAfterTimeInc;
+  bool m_EcnClampTgtRate;
+  double m_alpha[maxHop];
+  double m_alpha_resume_interval;
+  double m_g;
+  EventId  m_nextSend;		//< The next send event
 
   // Connections to other layers of TCP/IP
   Ipv4EndPoint*       m_endPoint;   //!< the IPv4 endpoint
@@ -242,7 +285,7 @@ private:
   bool m_mtuDiscover;       //!< Allow MTU discovery
   
   //加入新组件sendingBuffer
-  std :: queue <BufferItem> m_sedingBuffer;
+  std :: queue <BufferItem> m_sendingBuffer;
   
   EventId m_resumeAlpha[maxHop];
   DataRate m_rateAll[maxHop];
@@ -273,6 +316,53 @@ private:
   void rpr_hyper_increase(uint32_t hop);
   void rpr_cnm_received(uint32_t hop, double fraction);
   void rpr_timer_wrapper(uint32_t hop);
+};
+
+class MyTag : public Tag
+{
+public:
+  /**
+   * \brief Get the type ID.
+   * \return the object TypeId
+   */
+  static TypeId GetTypeId (void);
+  virtual TypeId GetInstanceTypeId (void) const;
+  virtual uint32_t GetSerializedSize (void) const;
+  virtual void Serialize (TagBuffer i) const;
+  virtual void Deserialize (TagBuffer i);
+  virtual void Print (std::ostream &os) const;
+
+  // these are our accessors to our tag structure
+  /**
+   * Set the tag value
+   * \param value The tag value.
+   */
+  void SetSimpleValue (uint8_t value);
+  /**
+   * Get the tag value
+   * \return the tag value.
+   */
+  uint8_t GetSimpleValue (void) const;
+private:
+  uint8_t m_simpleValue;  //!< tag value
+};
+
+class SocketAddressTag : public Tag
+{
+public:
+  SocketAddressTag ();
+  void SetAddress (Address addr);
+  Address GetAddress (void) const;
+
+  static TypeId GetTypeId (void);
+  virtual TypeId GetInstanceTypeId (void) const;
+  virtual uint32_t GetSerializedSize (void) const;
+  virtual void Serialize (TagBuffer i) const;
+  virtual void Deserialize (TagBuffer i);
+  virtual void Print (std::ostream &os) const;
+
+private:
+  Address m_address;
 };
 
 } // namespace ns3

@@ -631,7 +631,7 @@ UdpSocketDcqcn::TransmitStart(Ptr<Packet> p) {
 	void
 		UdpSocketDcqcn::rpr_hyper_increase(uint32_t hop)
 	{
-		AdjustRates(hop, m_rhai*(std::min(m_rpByteStage[hop], m_rpTimeStage[hop]) - m_rpgThreshold + 1));
+		AdjustRates(hop, m_rhai*(double)(std::min(m_rpByteStage[hop], m_rpTimeStage[hop]) - m_rpgThreshold + 1));
 		m_rpStage[hop] = 3;
 		return;
 	}
@@ -639,7 +639,7 @@ UdpSocketDcqcn::TransmitStart(Ptr<Packet> p) {
 	void
 		UdpSocketDcqcn::AdjustRates(uint32_t hop, DataRate increase)
 	{
-		if (((m_rpByteStage[hop] == 1) || (m_rpTimeStage[hop] == 1)) && (m_targetRate[hop] > 10 * m_rateAll[hop]))
+		if (((m_rpByteStage[hop] == 1) || (m_rpTimeStage[hop] == 1)) && (m_targetRate[hop] > m_rateAll[hop] * (uint64_t)10))
 			m_targetRate[hop] /= 8;
 		else
 			m_targetRate[hop] += increase;
@@ -755,12 +755,14 @@ UdpSocketDcqcn::DequeueAndTransmit(void) {
 			}
 		}
 		
-		BufferItem item = m_sendingBuffer.pop();
+		BufferItem item = m_sendingBuffer.front();
+    m_sendingBuffer.pop();
 		TransmitStart(item.p);
 		DoSendTo(item.p, item.dest, item.port, item.tos);
 		return;
 	}
 	
+  Time t = Simulator::GetMaximumSimulationTime();
 	//不能立刻发的预约一下
 	if (m_nextSend.IsExpired() &&
 		m_nextAvail < Simulator::GetMaximumSimulationTime() &&
@@ -774,11 +776,11 @@ UdpSocketDcqcn::DequeueAndTransmit(void) {
 }
 
 
-int UdpSocket::wrapDoSendTo(Ptr<Packet> p, Ipv4Address dest, uint16_t port, uint8_t tos) {
-	//m_sendingBuffer
-	m_sedingBuffer.push(BufferItem(p, dest, port, tos)); //TODO:定义一下类型
+int UdpSocketDcqcn::wrapDoSendTo(Ptr<Packet> p, Ipv4Address dest, uint16_t port, uint8_t tos) {
+	m_sendingBuffer.push(BufferItem(p, dest, port, tos)); //TODO:定义一下类型
 	
 	DequeueAndTransmit();
+  return 0;
 }
 
 int
@@ -922,6 +924,189 @@ UdpSocketDcqcn::DoSendTo (Ptr<Packet> p, Ipv4Address dest, uint16_t port, uint8_
           if (!m_allowBroadcast)
             {
               // Here we try to route subnet-directed broadcasts
+              uint32_t outputIfIndex = ipv4->GetInterfaceForDevice (route->GetOutputDevice ());
+              uint32_t ifNAddr = ipv4->GetNAddresses (outputIfIndex);
+              for (uint32_t addrI = 0; addrI < ifNAddr; ++addrI)
+                {
+                  Ipv4InterfaceAddress ifAddr = ipv4->GetAddress (outputIfIndex, addrI);
+                  if (dest == ifAddr.GetBroadcast ())
+                    {
+                      m_errno = ERROR_OPNOTSUPP;
+                      return -1;
+                    }
+                }
+            }
+
+          header.SetSource (route->GetSource ());
+          m_udp->Send (p->Copy (), header.GetSource (), header.GetDestination (),
+                       m_endPoint->GetLocalPort (), port, route);
+          NotifyDataSent (p->GetSize ());
+          return p->GetSize ();
+        }
+      else 
+        {
+          NS_LOG_LOGIC ("No route to destination");
+          NS_LOG_ERROR (errno_);
+          m_errno = errno_;
+          return -1;
+        }
+    }
+  else
+    {
+      NS_LOG_ERROR ("ERROR_NOROUTETOHOST");
+      m_errno = ERROR_NOROUTETOHOST;
+      return -1;
+    }
+
+  return 0;
+}
+
+int
+UdpSocketDcqcn::DoSendTo (Ptr<Packet> p, Ipv4Address dest, uint16_t port)
+{
+  NS_LOG_FUNCTION (this << p << dest << port);
+  if (m_boundnetdevice)
+    {
+      NS_LOG_LOGIC ("Bound interface number " << m_boundnetdevice->GetIfIndex ());
+    }
+  if (m_endPoint == 0)
+    {
+      if (Bind () == -1)
+        {
+          NS_ASSERT (m_endPoint == 0);
+          return -1;
+        }
+      NS_ASSERT (m_endPoint != 0);
+    }
+  if (m_shutdownSend)
+    {
+      m_errno = ERROR_SHUTDOWN;
+      return -1;
+    }
+
+  if (p->GetSize () > GetTxAvailable () )
+    {
+      m_errno = ERROR_MSGSIZE;
+      return -1;
+    }
+
+  Ptr<Ipv4> ipv4 = m_node->GetObject<Ipv4> ();
+
+  // Locally override the IP TTL for this socket
+  // We cannot directly modify the TTL at this stage, so we set a Packet tag
+  // The destination can be either multicast, unicast/anycast, or
+  // either all-hosts broadcast or limited (subnet-directed) broadcast.
+  // For the latter two broadcast types, the TTL will later be set to one
+  // irrespective of what is set in these socket options.  So, this tagging
+  // may end up setting the TTL of a limited broadcast packet to be
+  // the same as a unicast, but it will be fixed further down the stack
+  if (m_ipMulticastTtl != 0 && dest.IsMulticast ())
+    {
+      SocketIpTtlTag tag;
+      tag.SetTtl (m_ipMulticastTtl);
+      p->AddPacketTag (tag);
+    }
+  else if (IsManualIpTtl () && GetIpTtl () != 0 && !dest.IsMulticast () && !dest.IsBroadcast ())
+    {
+      SocketIpTtlTag tag;
+      tag.SetTtl (GetIpTtl ());
+      p->AddPacketTag (tag);
+    }
+  {
+    SocketSetDontFragmentTag tag;
+    bool found = p->RemovePacketTag (tag);
+    if (!found)
+      {
+        if (m_mtuDiscover)
+          {
+            tag.Enable ();
+          }
+        else
+          {
+            tag.Disable ();
+          }
+        p->AddPacketTag (tag);
+      }
+  }
+  //
+  // If dest is set to the limited broadcast address (all ones),
+  // convert it to send a copy of the packet out of every 
+  // interface as a subnet-directed broadcast.
+  // Exception:  if the interface has a /32 address, there is no
+  // valid subnet-directed broadcast, so send it as limited broadcast
+  // Note also that some systems will only send limited broadcast packets
+  // out of the "default" interface; here we send it out all interfaces
+  //
+  if (dest.IsBroadcast ())
+    {
+      if (!m_allowBroadcast)
+        {
+          m_errno = ERROR_OPNOTSUPP;
+          return -1;
+        }
+      NS_LOG_LOGIC ("Limited broadcast start.");
+      for (uint32_t i = 0; i < ipv4->GetNInterfaces (); i++ )
+        {
+          // Get the primary address
+          Ipv4InterfaceAddress iaddr = ipv4->GetAddress (i, 0);
+          Ipv4Address addri = iaddr.GetLocal ();
+          if (addri == Ipv4Address ("127.0.0.1"))
+            continue;
+          // Check if interface-bound socket
+          if (m_boundnetdevice) 
+            {
+              if (ipv4->GetNetDevice (i) != m_boundnetdevice)
+                continue;
+            }
+          Ipv4Mask maski = iaddr.GetMask ();
+          if (maski == Ipv4Mask::GetOnes ())
+            {
+              // if the network mask is 255.255.255.255, do not convert dest
+              NS_LOG_LOGIC ("Sending one copy from " << addri << " to " << dest
+                                                     << " (mask is " << maski << ")");
+              m_udp->Send (p->Copy (), addri, dest,
+                           m_endPoint->GetLocalPort (), port);
+              NotifyDataSent (p->GetSize ());
+              NotifySend (GetTxAvailable ());
+            }
+          else
+            {
+              // Convert to subnet-directed broadcast
+              Ipv4Address bcast = addri.GetSubnetDirectedBroadcast (maski);
+              NS_LOG_LOGIC ("Sending one copy from " << addri << " to " << bcast
+                                                     << " (mask is " << maski << ")");
+              m_udp->Send (p->Copy (), addri, bcast,
+                           m_endPoint->GetLocalPort (), port);
+              NotifyDataSent (p->GetSize ());
+              NotifySend (GetTxAvailable ());
+            }
+        }
+      NS_LOG_LOGIC ("Limited broadcast end.");
+      return p->GetSize ();
+    }
+  else if (m_endPoint->GetLocalAddress () != Ipv4Address::GetAny ())
+    {
+      m_udp->Send (p->Copy (), m_endPoint->GetLocalAddress (), dest,
+                   m_endPoint->GetLocalPort (), port, 0);
+      NotifyDataSent (p->GetSize ());
+      NotifySend (GetTxAvailable ());
+      return p->GetSize ();
+    }
+  else if (ipv4->GetRoutingProtocol () != 0)
+    {
+      Ipv4Header header;
+      header.SetDestination (dest);
+      header.SetProtocol (UdpL4Protocol::PROT_NUMBER);
+      Socket::SocketErrno errno_;
+      Ptr<Ipv4Route> route;
+      Ptr<NetDevice> oif = m_boundnetdevice; //specify non-zero if bound to a specific device
+      // TBD-- we could cache the route and just check its validity
+      route = ipv4->GetRoutingProtocol ()->RouteOutput (p, header, oif, errno_); 
+      if (route != 0)
+        {
+          NS_LOG_LOGIC ("Route exists");
+          if (!m_allowBroadcast)
+            {
               uint32_t outputIfIndex = ipv4->GetInterfaceForDevice (route->GetOutputDevice ());
               uint32_t ifNAddr = ipv4->GetNAddresses (outputIfIndex);
               for (uint32_t addrI = 0; addrI < ifNAddr; ++addrI)
@@ -1348,7 +1533,7 @@ UdpSocketDcqcn::ForwardUp (Ptr<Packet> packet, Ipv4Header header, uint16_t port,
 		SocketAddressTag tag;
 		tag.SetAddress (address);
 		packet->AddPacketTag (tag);
-		m_deliveryQueue.push (packet);
+		m_deliveryQueue.push (std::make_pair (packet, address));
 		m_rxAvailable += packet->GetSize ();
 		NotifyDataRecv ();
 		
@@ -1686,5 +1871,116 @@ UdpSocketDcqcn::Ipv6JoinGroup (Ipv6Address address, Socket::Ipv6MulticastFilterM
         }
     }
 }
+
+TypeId 
+MyTag::GetTypeId (void)
+{
+  static TypeId tid = TypeId ("ns3::MyTag")
+    .SetParent<Tag> ()
+    .AddConstructor<MyTag> ()
+    .AddAttribute ("SimpleValue",
+                   "A simple value",
+                   EmptyAttributeValue (),
+                   MakeUintegerAccessor (&MyTag::GetSimpleValue),
+                   MakeUintegerChecker<uint8_t> ())
+  ;
+  return tid;
+}
+TypeId 
+MyTag::GetInstanceTypeId (void) const
+{
+  return GetTypeId ();
+}
+uint32_t 
+MyTag::GetSerializedSize (void) const
+{
+  return 1;
+}
+void 
+MyTag::Serialize (TagBuffer i) const
+{
+  i.WriteU8 (m_simpleValue);
+}
+void 
+MyTag::Deserialize (TagBuffer i)
+{
+  m_simpleValue = i.ReadU8 ();
+}
+void 
+MyTag::Print (std::ostream &os) const
+{
+  os << "v=" << (uint32_t)m_simpleValue;
+}
+void 
+MyTag::SetSimpleValue (uint8_t value)
+{
+  m_simpleValue = value;
+}
+uint8_t 
+MyTag::GetSimpleValue (void) const
+{
+  return m_simpleValue;
+}
+
+SocketAddressTag::SocketAddressTag ()
+{
+  NS_LOG_FUNCTION (this);
+}
+
+void
+SocketAddressTag::SetAddress (Address addr)
+{
+  NS_LOG_FUNCTION (this << addr);
+  m_address = addr;
+}
+
+Address
+SocketAddressTag::GetAddress (void) const
+{
+  NS_LOG_FUNCTION (this);
+  return m_address;
+}
+
+NS_OBJECT_ENSURE_REGISTERED (SocketAddressTag);
+
+TypeId
+SocketAddressTag::GetTypeId (void)
+{
+  static TypeId tid = TypeId ("ns3::SocketAddressTag")
+    .SetParent<Tag> ()
+    .AddConstructor<SocketAddressTag> ()
+  ;
+  return tid;
+}
+TypeId
+SocketAddressTag::GetInstanceTypeId (void) const
+{
+  return GetTypeId ();
+}
+uint32_t
+SocketAddressTag::GetSerializedSize (void) const
+{
+  NS_LOG_FUNCTION (this);
+  return m_address.GetSerializedSize ();
+}
+void
+SocketAddressTag::Serialize (TagBuffer i) const
+{
+  NS_LOG_FUNCTION (this << &i);
+  m_address.Serialize (i);
+}
+void
+SocketAddressTag::Deserialize (TagBuffer i)
+{
+  NS_LOG_FUNCTION (this << &i);
+  m_address.Deserialize (i);
+}
+void
+SocketAddressTag::Print (std::ostream &os) const
+{
+  NS_LOG_FUNCTION (this << &os);
+  os << "address=" << m_address;
+}
+
 
 } // namespace ns3
