@@ -110,7 +110,7 @@ LosslessQueueDisc::DoDequeue (void)
     Address destMAC = item -> GetAddress();
     Ptr<Packet> p = item->GetPacket();//->Copy(); // Working on a copy.
     std::cout << "cout<<packet: \n";
-    std::cout << p;
+    std::cout << *p;
     //p->GetIpv4Header(std::cout);
     std::cout << "p->print: [";
     p->Print(std::cout);

@@ -583,7 +583,7 @@ bool
 PointToPointNetDevice::NeedsArp (void) const
 {
   NS_LOG_FUNCTION (this);
-  return false;
+  return true;
 }
 
 void
@@ -653,6 +653,7 @@ PointToPointNetDevice::PppToEther (uint16_t proto)
     {
     case 0x0021: return 0x0800;   //IPv4
     case 0x0057: return 0x86DD;   //IPv6
+    case 0xbeaf: return 0x0806;   // ARP
     default: NS_ASSERT_MSG (false, "PPP Protocol number not defined!");
     }
   return 0;
@@ -666,7 +667,11 @@ PointToPointNetDevice::EtherToPpp (uint16_t proto)
     {
     case 0x0800: return 0x0021;   //IPv4
     case 0x86DD: return 0x0057;   //IPv6
-    default: NS_ASSERT_MSG (false, "PPP Protocol number not defined!");
+    case 0x0806: return 0xbeaf;   //ARP
+    // I think that the PPP header is only used to distinguish IPv4 from IPv6. So using 0xbeaf (an arbitrary other number) here shouldn't cause too much trouble, apart from that "ARP packets aren't transferred on PPP devices in real life". 
+    default: 
+    std::cout << "Not defined ppp protocol number: " << proto << std::endl;
+    NS_ASSERT_MSG (false, "PPP Protocol number not defined!");
     }
   return 0;
 }
