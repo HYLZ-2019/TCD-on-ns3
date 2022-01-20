@@ -199,7 +199,7 @@ private:
    * \returns 0 on success, -1 on failure
    */
   int DoSendTo (Ptr<Packet> p, Ipv6Address daddr, uint16_t dport);
-  int wrapDoSendTo(Ptr<Packet> p, Ipv6Address dest, uint16_t port); 
+  //int wrapDoSendTo(Ptr<Packet> p, Ipv6Address dest, uint16_t port); 
 
   /**
    * \brief Called by the L3 protocol when it received an ICMP packet to pass on to TCP.
@@ -240,7 +240,7 @@ private:
    */
   TxMachineState m_txMachineState;
   Ptr<Packet> m_currentPkt;
-  uint64_t       m_bps;
+  DataRate    m_bps;
   Time m_tInterframeGap;
   double m_rpgTimeReset;
   EventId m_rptimer[maxHop];  // 去掉了fcnt
@@ -300,6 +300,9 @@ private:
   Time     m_nextAvail;	//< Soonest time of next send
   double   m_credits;	//< Credits accumulated
   EventId m_rateIncrease; // rate increase event (QCN)
+  uint8_t m_ecnbits;
+	uint16_t m_qfb;
+	uint16_t m_total;
   
   void ResumeAlpha(uint32_t hop);
   void AdjustRates(uint32_t hop, DataRate increase);

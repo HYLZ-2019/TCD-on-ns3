@@ -42,6 +42,7 @@ UdpSocketFactoryDcqcn::SetUdp (Ptr<UdpL4Protocol> udp)
 Ptr<Socket>
 UdpSocketFactoryDcqcn::CreateSocket (void)
 {
+  std::cout << "DCQCN::CreateSocket\n";
   return m_udp->CreateSocket ();
 }
 

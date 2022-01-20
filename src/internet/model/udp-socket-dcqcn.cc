@@ -439,6 +439,7 @@ UdpSocketDcqcn::Send (Ptr<Packet> p, uint32_t flags) /*TODO 替换成DCQCN的版
 {
   NS_LOG_FUNCTION (this << p << flags);
 
+  std::cout << "DCQCN::Send is called\n";
   if (!m_connected)
     {
       m_errno = ERROR_NOTCONN;
@@ -480,9 +481,10 @@ UdpSocketDcqcn::DoSend (Ptr<Packet> p) /*TODO 替换成DCQCN的版本*/
     {
       return wrapDoSendTo (p, Ipv4Address::ConvertFrom (m_defaultAddress), m_defaultPort, GetIpTos ());
     }
-  else if (Ipv6Address::IsMatchingType (m_defaultAddress))
+  else if (Ipv6Address::IsMatchingType (m_defaultAddress)) //We don't use it;
     {
-      return wrapDoSendTo (p, Ipv6Address::ConvertFrom (m_defaultAddress), m_defaultPort);
+      std::cout << "ATTENTION: Ipv6 version of DCQCN SOCKET is not completed.\n";
+      return DoSendTo (p, Ipv6Address::ConvertFrom (m_defaultAddress), m_defaultPort);
     }
 
   m_errno = ERROR_AFNOSUPPORT;
@@ -514,7 +516,7 @@ UdpSocketDcqcn::TransmitStart(Ptr<Packet> p) {
 	m_txMachineState = BUSY;
 	m_currentPkt = p;
 	//m_phyTxBeginTrace(m_currentPkt);
-	Time txTime = Seconds(m_bps.CalculateTxTime(p->GetSize()));
+	Time txTime = m_bps.CalculateBytesTxTime(p -> GetSize());
 	Time txCompleteTime = txTime + m_tInterframeGap;
 	NS_LOG_LOGIC("Schedule TransmitCompleteEvent in " << txCompleteTime.GetSeconds() << "sec");
 	Simulator::Schedule(txCompleteTime, &UdpSocketDcqcn::TransmitComplete, this);
@@ -727,20 +729,23 @@ UdpSocketDcqcn::DequeueAndTransmit(void) {
 	if (m_sendingBuffer.empty()) return;
 	
 	if (m_nextAvail <= Simulator::GetMaximumSimulationTime()) { //立刻发包
+		BufferItem item = m_sendingBuffer.front();
+    m_sendingBuffer.pop();
+
 		if (m_rate == 0) {			//late initialization	
 			m_rate = m_bps;
 			for (uint32_t j = 0; j < maxHop; j++) {
 				m_rateAll[j] = m_bps, m_targetRate[j] = m_bps;
 			}
 		}
-		double creditsDue = std::max(0.0, m_bps / m_rate * (p->GetSize() - m_credits));
-		Time nextSend = m_tInterframeGap + Seconds(m_bps.CalculateTxTime(creditsDue));
+		double creditsDue = std::max(0.0, (double)m_bps.GetBitRate() / m_rate.GetBitRate() * (item.p->GetSize() - m_credits));
+		Time nextSend = m_tInterframeGap + m_bps.CalculateBytesTxTime(creditsDue);
 		m_nextAvail = Simulator::Now() + nextSend;
 
 		m_credits = 0;	//reset credits
 		for (uint32_t i = 0; i < 1; i++)
 		{
-			if (m_rpStage[i] > 0) m_txBytes[i] -= p->GetSize();
+			if (m_rpStage[i] > 0) m_txBytes[i] -= item.p->GetSize();
 			else m_txBytes[i] = m_bc;
 			if (m_txBytes[i] < 0) {
 				if (m_rpStage[i] == 1) {
@@ -755,8 +760,6 @@ UdpSocketDcqcn::DequeueAndTransmit(void) {
 			}
 		}
 		
-		BufferItem item = m_sendingBuffer.front();
-    m_sendingBuffer.pop();
 		TransmitStart(item.p);
 		DoSendTo(item.p, item.dest, item.port, item.tos);
 		return;
@@ -774,7 +777,6 @@ UdpSocketDcqcn::DequeueAndTransmit(void) {
 
 	return;
 }
-
 
 int UdpSocketDcqcn::wrapDoSendTo(Ptr<Packet> p, Ipv4Address dest, uint16_t port, uint8_t tos) {
 	m_sendingBuffer.push(BufferItem(p, dest, port, tos)); //TODO:定义一下类型
@@ -1296,7 +1298,8 @@ UdpSocketDcqcn::SendTo (Ptr<Packet> p, uint32_t flags, const Address &address)
       Inet6SocketAddress transport = Inet6SocketAddress::ConvertFrom (address);
       Ipv6Address ipv6 = transport.GetIpv6 ();
       uint16_t port = transport.GetPort ();
-      return wrapDoSendTo (p, ipv6, port);
+      std::cout << "ATTENTION: Ipv6 version of DCQCN SOCKET is not completed.\n";
+      return DoSendTo (p, ipv6, port);
     }
   return -1;
 }
@@ -1485,6 +1488,7 @@ UdpSocketDcqcn::ForwardUp (Ptr<Packet> packet, Ipv4Header header, uint16_t port,
 	if (m_shutdownRecv) {
 		return;
 	}
+  std::cout << "header=[" << header << "], port=[" << port << "].\n";
 	
 	  // Should check via getsockopt ()..
 	if (IsRecvPktInfo ())
@@ -1523,7 +1527,7 @@ UdpSocketDcqcn::ForwardUp (Ptr<Packet> packet, Ipv4Header header, uint16_t port,
 	//simple value值为1, 2, 3的情况对应TCD三元组 其中3是congestion
 	//QCN对应simple value的值是4的情况
 	MyTag myTag;
-	packet -> remove(myTag);
+	packet -> RemovePacketTag(myTag);
 	uint8_t simpleValue = myTag.GetSimpleValue();
 	
 	bool isQCN = ((simpleValue & 4) != 0);
@@ -1575,7 +1579,7 @@ UdpSocketDcqcn::ForwardUp (Ptr<Packet> packet, Ipv4Header header, uint16_t port,
 		}
 		
 		if (ecnbits == 0x03) { //这应该是QCN的一部分
-			rpr_cnm_received(i, 0, qfb*1.0 / (total + 1)); //这是DCQCN的一部分，DCQCN的部分都要搬进来
+			rpr_cnm_received(0, m_qfb*1.0 / (m_total + 1)); //这是DCQCN的一部分，DCQCN的部分都要搬进来
 		}
 
 		m_rate = m_bps;
@@ -1588,7 +1592,7 @@ void
 UdpSocketDcqcn::ForwardUp6 (Ptr<Packet> packet, Ipv6Header header, uint16_t port, Ptr<Ipv6Interface> incomingInterface)
 {
   NS_LOG_FUNCTION (this << packet << header.GetSource () << port);
-
+  std::cout << "????ForwardUp6\n";
 #ifdef RDMA_RECV
 
   // 由于rdma并不区分ipv4和ipv6，所以ForwardUp6基本和ForwardUp4一致
