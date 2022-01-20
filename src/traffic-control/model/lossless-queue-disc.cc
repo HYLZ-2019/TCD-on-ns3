@@ -22,7 +22,7 @@
 #include "lossless-queue-disc.h"
 #include "ns3/object-factory.h"
 #include "ns3/drop-tail-queue.h"
-#include "ns3/ipv4-static-routing.h"
+#include "ns3/ipv4-global-routing.h"
 #include "ns3/ipv4-queue-disc-item.h"
 
 
@@ -131,6 +131,7 @@ LosslessQueueDisc::DoDequeue (void)
     Address destMAC = item -> GetAddress();
     NodeContainer nc = this->onoffTable->getGlobalNodes();
     Ptr<NetDevice> dv; // The destination device.
+    Ptr<Node> destNode; // The destination node.
     bool found = 0;
     for (auto node = nc.Begin(); node!=nc.End(); node++){
       uint32_t num = (*node) -> GetNDevices();
@@ -138,6 +139,7 @@ LosslessQueueDisc::DoDequeue (void)
         dv = (*node)->GetDevice(k);
         if (dv->GetAddress() == destMAC){
           found = 1;
+          destNode = *node;
           break;
         }
       }
@@ -146,7 +148,12 @@ LosslessQueueDisc::DoDequeue (void)
     
     // Find where the packet will go in the next hop.
     Socket::SocketErrno err; // The returned error number.
-    Ptr<Ipv4Route> route = Ipv4StaticRouting::RouteOutput(ipitem->GetPacket(), hd, dv, err);
+    Ptr<Ipv4GlobalRouting> router = destNode->GetObject<Ipv4GlobalRouting>();
+    // The program will crash here, because router will be NULL.
+    // I tried to new an Ipv4GlobalRouting to be router, but it will be empty and cannot route.
+    Ptr<Ipv4Route> route = router->RouteOutput(ipitem->GetPacket(), hd, dv, err);
+    std::cout << "err: " << err << std::endl;
+    std::cout << "route: " << route << std::endl;
     std::cout << "Device address of found route: " << route->GetOutputDevice()->GetAddress() << "\n";
     //std::cout << "Packet with GetAddress() == " << destMAC << std::endl;
     bool destOff = ! onoffTable -> getValue(destMAC); 
