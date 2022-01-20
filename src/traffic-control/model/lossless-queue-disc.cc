@@ -310,7 +310,7 @@ void LosslessQueueDisc::updateQlenDecrease(){
   m_last_qsize = curlen;
   sem_post(&m_qlen_decrease_mutex);
   // Do this after each qsize_decrease_update_interval.
-  Simulator::Schedule(qsize_decrease_update_interval, updateQlenDecrease);
+  Simulator::Schedule(qsize_decrease_update_interval, &LosslessQueueDisc::updateQlenDecrease, this);
 }
 
 } // namespace ns3
