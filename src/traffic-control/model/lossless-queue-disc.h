@@ -27,6 +27,17 @@
 
 namespace ns3 {
 
+enum TcdState {
+  TCD_UNDETERMINED,
+  TCD_CONGESTION,
+  TCD_NONCONGESTION
+};
+
+enum TcdQueueState {
+  TCD_CLEAR,
+  TCD_BLOCKED
+};
+
 /**
  * \ingroup traffic-control
  *
@@ -62,17 +73,6 @@ public:
   QueueSize tcdThreshold = QueueSize("4p");
   Time max_t_on = Time("1s");
   Time qsize_decrease_update_interval = Time("0.5s");
-
-  enum TcdState {
-    TCD_UNDETERMINED,
-    TCD_CONGESTION,
-    TCD_NONCONGESTION
-  };
-
-  enum TcdQueueState {
-    TCD_CLEAR,
-    TCD_BLOCKED
-  };
 
   /**
    * @brief Update m_qState and m_start_clear_time when a packet is clear to send.

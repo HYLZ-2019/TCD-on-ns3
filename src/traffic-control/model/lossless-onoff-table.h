@@ -5,6 +5,7 @@
 #include <vector>
 #include <map>
 #include <ns3/address.h>
+#include "ns3/network-module.h"
 #include <semaphore.h>
 namespace ns3 {
 
@@ -42,12 +43,17 @@ public:
 
     void printAll();
 
+    void setGlobalNodes(NodeContainer nodes);
+    NodeContainer getGlobalNodes();
+
 private:
     sem_t mutex;
     sem_t BQ;
 
     std::map <Address, bool> ONOFFlist;
     std::multimap <Address, Ptr<QueueDisc> > blockQueue;
+
+    NodeContainer globalNodes;
 };
 
 } // namespace ns3

@@ -133,9 +133,9 @@ LosslessQueueDisc::DoDequeue (void)
     Ptr<NetDevice> dv; // The destination device.
     bool found = 0;
     for (auto node = nc.Begin(); node!=nc.End(); node++){
-      uint32_t num = node -> GetNDevices();
+      uint32_t num = (*node) -> GetNDevices();
       for (uint32_t k = 0; k + 1 != num; ++k) {
-        dv = node->GetDevice(k);
+        dv = (*node)->GetDevice(k);
         if (dv->GetAddress() == destMAC){
           found = 1;
           break;
