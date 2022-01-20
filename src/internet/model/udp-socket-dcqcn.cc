@@ -76,6 +76,10 @@ UdpSocketDcqcn::GetTypeId (void)
                    CallbackValue (),
                    MakeCallbackAccessor (&UdpSocketDcqcn::m_icmpCallback6),
                    MakeCallbackChecker ())
+    .AddAttribute ("bps", "Default DataRate of the Socket",
+                DataRateValue (DataRate ("100Mb/s")),
+                MakeDataRateAccessor (&UdpSocketDcqcn::m_bps),
+                MakeDataRateChecker ())
   ;
   return tid;
 }
@@ -439,10 +443,8 @@ UdpSocketDcqcn::Send (Ptr<Packet> p, uint32_t flags) /*TODO 替换成DCQCN的版
 {
   NS_LOG_FUNCTION (this << p << flags);
 
-  std::cout << "DCQCN::Send is called\n";
   if (!m_connected)
     {
-      std::cout << "Error: GG\n"; 
       m_errno = ERROR_NOTCONN;
       return -1;
     }
@@ -454,7 +456,7 @@ int
 UdpSocketDcqcn::DoSend (Ptr<Packet> p) /*TODO 替换成DCQCN的版本*/
 {
   NS_LOG_FUNCTION (this << p);
-  std::cout << "DCQCN::DoSend is called\n";
+  //std::cout << "DoSend " << p << "\n";
   if ((m_endPoint == 0) && (Ipv4Address::IsMatchingType(m_defaultAddress) == true))
     {
       if (Bind () == -1)
@@ -485,7 +487,6 @@ UdpSocketDcqcn::DoSend (Ptr<Packet> p) /*TODO 替换成DCQCN的版本*/
     }
   else if (Ipv6Address::IsMatchingType (m_defaultAddress)) //We don't use it;
     {
-      std::cout << "ATTENTION: Ipv6 version of DCQCN SOCKET is not completed.\n";
       return DoSendTo (p, Ipv6Address::ConvertFrom (m_defaultAddress), m_defaultPort);
     }
 
@@ -725,7 +726,6 @@ UdpSocketDcqcn::TransmitStart(Ptr<Packet> p) {
 void
 UdpSocketDcqcn::DequeueAndTransmit(void) {
 	NS_LOG_FUNCTION(this);
-  std::cout << "DequeueAndTransmit is called.\n";
 	if (m_txMachineState == BUSY) return;	// Quit if channel busy
 	
 	//没有要发的包了，return
@@ -734,7 +734,6 @@ UdpSocketDcqcn::DequeueAndTransmit(void) {
 	if (m_nextAvail <= Simulator::GetMaximumSimulationTime()) { //立刻发包
 		BufferItem item = m_sendingBuffer.front();
     m_sendingBuffer.pop();
-
 		if (m_rate == 0) {			//late initialization	
 			m_rate = m_bps;
 			for (uint32_t j = 0; j < maxHop; j++) {
@@ -762,7 +761,6 @@ UdpSocketDcqcn::DequeueAndTransmit(void) {
 				}
 			}
 		}
-		
 		TransmitStart(item.p);
 		DoSendTo(item.p, item.dest, item.port, item.tos);
 		return;
@@ -782,7 +780,8 @@ UdpSocketDcqcn::DequeueAndTransmit(void) {
 }
 
 int UdpSocketDcqcn::wrapDoSendTo(Ptr<Packet> p, Ipv4Address dest, uint16_t port, uint8_t tos) {
-  std::cout << "wrapDoSendTo is called.\n";
+
+  std::cout << "wrapDoSendTo: packet=[" << p << "], dest=[" << dest << "], port=[" << port << "].\n";
 	m_sendingBuffer.push(BufferItem(p, dest, port, tos)); //TODO:定义一下类型
 	
 	DequeueAndTransmit();
@@ -793,7 +792,6 @@ int
 UdpSocketDcqcn::DoSendTo (Ptr<Packet> p, Ipv4Address dest, uint16_t port, uint8_t tos)
 {
   NS_LOG_FUNCTION (this << p << dest << port << (uint16_t) tos);
-  std::cout << "UdpSocketDcqcn::DoSendTo() is called.\n";
   if (m_boundnetdevice)
     {
       NS_LOG_LOGIC ("Bound interface number " << m_boundnetdevice->GetIfIndex ());
@@ -1303,7 +1301,6 @@ UdpSocketDcqcn::SendTo (Ptr<Packet> p, uint32_t flags, const Address &address)
       Inet6SocketAddress transport = Inet6SocketAddress::ConvertFrom (address);
       Ipv6Address ipv6 = transport.GetIpv6 ();
       uint16_t port = transport.GetPort ();
-      std::cout << "ATTENTION: Ipv6 version of DCQCN SOCKET is not completed.\n";
       return DoSendTo (p, ipv6, port);
     }
   return -1;
@@ -1493,7 +1490,7 @@ UdpSocketDcqcn::ForwardUp (Ptr<Packet> packet, Ipv4Header header, uint16_t port,
 	if (m_shutdownRecv) {
 		return;
 	}
-  std::cout << "header=[" << header << "], port=[" << port << "].\n";
+  std::cout << "ForwardUp header=[" << header << "], port=[" << port << "].\n";
 	
 	  // Should check via getsockopt ()..
 	if (IsRecvPktInfo ())
@@ -1597,7 +1594,7 @@ void
 UdpSocketDcqcn::ForwardUp6 (Ptr<Packet> packet, Ipv6Header header, uint16_t port, Ptr<Ipv6Interface> incomingInterface)
 {
   NS_LOG_FUNCTION (this << packet << header.GetSource () << port);
-  std::cout << "????ForwardUp6\n";
+  std::cout << "ForwardUp6() is called\n";
 #ifdef RDMA_RECV
 
   // 由于rdma并不区分ipv4和ipv6，所以ForwardUp6基本和ForwardUp4一致
