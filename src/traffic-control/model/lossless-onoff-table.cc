@@ -141,4 +141,12 @@ void LosslessOnoffTable::printAll(){
     sem_post(&mutex);
 }
 
+void LosslessOnoffTable::setGlobalNodes(NodeContainer nodes){
+    globalNodes = nodes;
+}
+
+NodeContainer LosslessOnoffTable::getGlobalNodes(){
+    return globalNodes;
+}
+
 } //namespace ns3

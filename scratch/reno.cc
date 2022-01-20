@@ -328,6 +328,7 @@ int main (int argc, char *argv[])
                     "ns3::ConstantRandomVariable[Constant=1]", "ns3::ConstantRandomVariable[Constant=0]", 
                     1024, "1Mbps");
 
+  globalOnoffTable.setGlobalNodes(&nodes);
 
   // Enable PCAP on all the point to point interfaces
   channelHelpers[0].EnablePcapAll (dir + "pcap/ns-3", true);

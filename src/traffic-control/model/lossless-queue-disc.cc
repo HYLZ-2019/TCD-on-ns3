@@ -23,7 +23,7 @@
 #include "ns3/object-factory.h"
 #include "ns3/drop-tail-queue.h"
 #include "ns3/ipv4-static-routing.h"
-
+#include "ns3/ipv4-queue-disc-item.h"
 
 
 namespace ns3 {
@@ -106,22 +106,37 @@ LosslessQueueDisc::DoDequeue (void)
         //std::cout << "DoDequeue: queue empty.\n";
         return 0;
     }
-
-    Address destMAC = item -> GetAddress();
-    Ptr<Packet> p = item->GetPacket();//->Copy(); // Working on a copy.
-    std::cout << "cout<<packet: \n";
-    std::cout << *p;
-    //p->GetIpv4Header(std::cout);
-    std::cout << "p->print: [";
-    p->Print(std::cout);
-    std::cout << "]\n";
-    std::cout << "item->print: [";
     item->Print(std::cout);
-    std::cout << "]\n";
     
-    /*std::cout << p << std::endl;*/
-    /*Ptr<Ipv4Route> route = Ipv4StaticRouting::RouteOutput(item->GetPacket(), )*/
-    std::cout << "Packet with GetAddress() == " << destMAC << std::endl;
+    // Creepy pointer convertions.
+    const QueueDiscItem* itemptr = &(*item);
+    Ipv4QueueDiscItem* ipitem = (Ipv4QueueDiscItem*)itemptr;
+    
+    Ipv4Header hd = ipitem->GetHeader();
+    std::cout << "Got Ipv4Header: " << hd << std::endl;
+    
+    // Find the destination device.
+    Address destMAC = item -> GetAddress();
+    NodeContainer nc = this->onoffTable->getGlobalNodes();
+    Ptr<NetDevice> dv; // The destination device.
+    bool found == 0;
+    for (auto node = nc.Begin(); node!=nc.End(); node++){
+      uint32_t num = node -> GetNDevices();
+      for (uint32_t k = 0; k + 1 != num; ++k) {
+        dv = node->GetDevice(k);
+        if (dv->GetAddress() == destMAC){
+          found = 1;
+          break;
+        }
+      }
+      if (found == 1) break;
+    }
+    
+    // Find where the packet will go in the next hop.
+    Socket::SocketErrno err; // The returned error number.
+    Ptr<Ipv4Route> route = Ipv4StaticRouting::RouteOutput(ipitem->GetPacket(), hd, dv, err);
+    std::cout << "Device address of found route: " << route->GetOutputDevice()->GetAddress() << "\n";
+    //std::cout << "Packet with GetAddress() == " << destMAC << std::endl;
     bool destOff = ! onoffTable -> getValue(destMAC); 
     
     if (destOff) {
