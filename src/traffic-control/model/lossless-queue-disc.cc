@@ -133,22 +133,30 @@ LosslessQueueDisc::DoDequeue (void)
     Ptr<NetDevice> dv; // The destination device.
     Ptr<Node> destNode; // The destination node.
     bool found = 0;
+    std::cout << "destMAC: " << destMAC << std::endl;
     for (auto node = nc.Begin(); node!=nc.End(); node++){
       uint32_t num = (*node) -> GetNDevices();
       for (uint32_t k = 0; k + 1 != num; ++k) {
         dv = (*node)->GetDevice(k);
+        std::cout << "dv->GetAddress: " << dv->GetAddress() << std::endl;
         if (dv->GetAddress() == destMAC){
           found = 1;
           destNode = *node;
+          std::cout << "Found\n";
           break;
         }
       }
       if (found == 1) break;
     }
+    if (found == 0){
+      goto giveUpThinking;
+    }
     
     // Find where the packet will go in the next hop.
     Socket::SocketErrno err; // The returned error number.
-    Ptr<Ipv4GlobalRouting> router = destNode->GetObject<Ipv4GlobalRouting>();
+    Ptr<GlobalRouter> gr = destNode->GetObject<GlobalRouter>();
+    std::cout << "GlobalRouter: " << gr << std::endl;
+    Ptr<Ipv4GlobalRouting> router = gr->GetRoutingProtocol();
     // The program will crash here, because router will be NULL.
     // I tried to new an Ipv4GlobalRouting to be router, but it will be empty and cannot route.
     Ptr<Ipv4Route> route = router->RouteOutput(ipitem->GetPacket(), hd, dv, err);
@@ -167,6 +175,10 @@ LosslessQueueDisc::DoDequeue (void)
         return 0;
         // 外部可能会因为这里返回0而认为队列空了，从而停止run。如果发现了类似的bug，要记得往这方面想（并且打补丁）。
     }
+
+giveUpThinking:
+    // Pretend that the train is going forward.
+
     reportOutputClear();
 
   Ptr<QueueDiscItem> realitem = GetInternalQueue (0)->Dequeue (); // not const

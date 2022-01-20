@@ -23,7 +23,7 @@
 
 #include "ns3/queue-disc.h"
 #include "lossless-onoff-table.h"
-
+#include "ns3/global-router-interface.h"
 
 namespace ns3 {
 
