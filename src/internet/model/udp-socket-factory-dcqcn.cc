@@ -36,13 +36,13 @@ UdpSocketFactoryDcqcn::~UdpSocketFactoryDcqcn ()
 void
 UdpSocketFactoryDcqcn::SetUdp (Ptr<UdpL4Protocol> udp)
 {
+  std::cout << "DCQCN::SetUdp() is called\n";
   m_udp = udp;
 }
 
 Ptr<Socket>
 UdpSocketFactoryDcqcn::CreateSocket (void)
 {
-  std::cout << "DCQCN::CreateSocket\n";
   return m_udp->CreateSocket ();
 }
 

@@ -489,6 +489,7 @@ int
 UdpSocketImpl::DoSendTo (Ptr<Packet> p, Ipv4Address dest, uint16_t port, uint8_t tos)
 {
   NS_LOG_FUNCTION (this << p << dest << port << (uint16_t) tos);
+  std::cout << "UdpSocketImpl()::DoSendTo is called.\n";
   if (m_boundnetdevice)
     {
       NS_LOG_LOGIC ("Bound interface number " << m_boundnetdevice->GetIfIndex ());

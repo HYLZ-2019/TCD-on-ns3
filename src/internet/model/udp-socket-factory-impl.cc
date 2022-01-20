@@ -36,12 +36,14 @@ UdpSocketFactoryImpl::~UdpSocketFactoryImpl ()
 void
 UdpSocketFactoryImpl::SetUdp (Ptr<UdpL4Protocol> udp)
 {
+  std::cout << "IMPL::SetUdp() is called\n";
   m_udp = udp;
 }
 
 Ptr<Socket>
 UdpSocketFactoryImpl::CreateSocket (void)
 {
+  std::cout << "IMPL::CreateSocket\n";
   return m_udp->CreateSocket ();
 }
 

@@ -442,6 +442,7 @@ UdpSocketDcqcn::Send (Ptr<Packet> p, uint32_t flags) /*TODO 替换成DCQCN的版
   std::cout << "DCQCN::Send is called\n";
   if (!m_connected)
     {
+      std::cout << "Error: GG\n"; 
       m_errno = ERROR_NOTCONN;
       return -1;
     }
@@ -453,6 +454,7 @@ int
 UdpSocketDcqcn::DoSend (Ptr<Packet> p) /*TODO 替换成DCQCN的版本*/
 {
   NS_LOG_FUNCTION (this << p);
+  std::cout << "DCQCN::DoSend is called\n";
   if ((m_endPoint == 0) && (Ipv4Address::IsMatchingType(m_defaultAddress) == true))
     {
       if (Bind () == -1)
@@ -723,6 +725,7 @@ UdpSocketDcqcn::TransmitStart(Ptr<Packet> p) {
 void
 UdpSocketDcqcn::DequeueAndTransmit(void) {
 	NS_LOG_FUNCTION(this);
+  std::cout << "DequeueAndTransmit is called.\n";
 	if (m_txMachineState == BUSY) return;	// Quit if channel busy
 	
 	//没有要发的包了，return
@@ -779,6 +782,7 @@ UdpSocketDcqcn::DequeueAndTransmit(void) {
 }
 
 int UdpSocketDcqcn::wrapDoSendTo(Ptr<Packet> p, Ipv4Address dest, uint16_t port, uint8_t tos) {
+  std::cout << "wrapDoSendTo is called.\n";
 	m_sendingBuffer.push(BufferItem(p, dest, port, tos)); //TODO:定义一下类型
 	
 	DequeueAndTransmit();
@@ -789,6 +793,7 @@ int
 UdpSocketDcqcn::DoSendTo (Ptr<Packet> p, Ipv4Address dest, uint16_t port, uint8_t tos)
 {
   NS_LOG_FUNCTION (this << p << dest << port << (uint16_t) tos);
+  std::cout << "UdpSocketDcqcn::DoSendTo() is called.\n";
   if (m_boundnetdevice)
     {
       NS_LOG_LOGIC ("Bound interface number " << m_boundnetdevice->GetIfIndex ());
