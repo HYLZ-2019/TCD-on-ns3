@@ -77,7 +77,7 @@ UdpSocketDcqcn::GetTypeId (void)
                    MakeCallbackAccessor (&UdpSocketDcqcn::m_icmpCallback6),
                    MakeCallbackChecker ())
     .AddAttribute ("bps", "Default DataRate of the Socket",
-                DataRateValue (DataRate ("100Mb/s")),
+                DataRateValue (DataRate ("1b/s")),
                 MakeDataRateAccessor (&UdpSocketDcqcn::m_bps),
                 MakeDataRateChecker ())
   ;
@@ -1487,6 +1487,7 @@ UdpSocketDcqcn::ForwardUp (Ptr<Packet> packet, Ipv4Header header, uint16_t port,
                           Ptr<Ipv4Interface> incomingInterface)
 {
 	NS_LOG_FUNCTION (this << packet << header << port);
+  std::cout << "DCQCN::ForwardUp() is called.\n";
 	if (m_shutdownRecv) {
 		return;
 	}

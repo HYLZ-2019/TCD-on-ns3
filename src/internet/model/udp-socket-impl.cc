@@ -1003,6 +1003,7 @@ UdpSocketImpl::ForwardUp (Ptr<Packet> packet, Ipv4Header header, uint16_t port,
 {
   NS_LOG_FUNCTION (this << packet << header << port);
 
+  std::cout << "Impl::ForwardUp() is called.\n";
   if (m_shutdownRecv)
     {
       return;
@@ -1062,11 +1063,11 @@ UdpSocketImpl::ForwardUp6 (Ptr<Packet> packet, Ipv6Header header, uint16_t port,
 {
   NS_LOG_FUNCTION (this << packet << header.GetSource () << port);
 
+  std::cout << "Impl::ForwardUp6() is called.\n";
   if (m_shutdownRecv)
     {
       return;
     }
-
   // Should check via getsockopt ().
   if (IsRecvPktInfo ())
     {
