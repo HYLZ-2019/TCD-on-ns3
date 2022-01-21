@@ -118,8 +118,10 @@ LosslessQueueDisc::DoDequeue (void)
         //std::cout << "DoDequeue: queue empty.\n";
         return 0;
     }
-    item->Print(std::cout);
     
+    item->Print(std::cout);
+  
+  try {
     // Creepy pointer convertions.
     const QueueDiscItem* itemptr = &(*item);
     Ipv4QueueDiscItem* ipitem = (Ipv4QueueDiscItem*)itemptr;
@@ -149,7 +151,7 @@ LosslessQueueDisc::DoDequeue (void)
       if (found == 1) break;
     }
     if (found == 0){
-      goto giveUpThinking;
+      throw "The device for the destination MAC is not found! (Maybe destMAC is BROADCAST?)";
     }
     
     // Find where the packet will go in the next hop.
@@ -162,6 +164,9 @@ LosslessQueueDisc::DoDequeue (void)
     Ptr<Ipv4Route> route = router->RouteOutput(ipitem->GetPacket(), hd, dv, err);
     std::cout << "err: " << err << std::endl;
     std::cout << "route: " << route << std::endl;
+    if (route == NULL){
+      throw "route is NULL (Reason unknown)";
+    }
     std::cout << "Device address of found route: " << route->GetOutputDevice()->GetAddress() << "\n";
     //std::cout << "Packet with GetAddress() == " << destMAC << std::endl;
     bool destOff = ! onoffTable -> getValue(destMAC); 
@@ -175,11 +180,12 @@ LosslessQueueDisc::DoDequeue (void)
         return 0;
         // 外部可能会因为这里返回0而认为队列空了，从而停止run。如果发现了类似的bug，要记得往这方面想（并且打补丁）。
     }
-
-giveUpThinking:
-    // Pretend that the train is going forward.
-
-    reportOutputClear();
+  }
+  catch (const char* msg){
+    std::cout << "Caught an exception!\n";
+    std::cout << msg << "\n";
+  }
+  reportOutputClear();
 
   Ptr<QueueDiscItem> realitem = GetInternalQueue (0)->Dequeue (); // not const
 
