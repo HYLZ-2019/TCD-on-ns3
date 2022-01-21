@@ -22,8 +22,8 @@
 #include "lossless-queue-disc.h"
 #include "ns3/object-factory.h"
 #include "ns3/drop-tail-queue.h"
-
-
+#include "ns3/ipv4-global-routing.h"
+#include "ns3/ipv4-queue-disc-item.h"
 
 
 namespace ns3 {
@@ -52,6 +52,12 @@ LosslessQueueDisc::LosslessQueueDisc ()
   : QueueDisc (QueueDiscSizePolicy::SINGLE_INTERNAL_QUEUE)
 { 
   NS_LOG_FUNCTION (this);
+  m_laststate = TcdState::TCD_UNDETERMINED;
+  m_qState = TcdQueueState::TCD_CLEAR;
+  m_start_clear_time = Simulator::Now();
+  m_last_qsize = QueueSize("0p");
+  sem_init(&m_qlen_decrease_mutex, 0, 1);
+  updateQlenDecrease();
 }
 
 LosslessQueueDisc::LosslessQueueDisc (LosslessOnoffTable* _onofftable)
@@ -59,6 +65,12 @@ LosslessQueueDisc::LosslessQueueDisc (LosslessOnoffTable* _onofftable)
 { // 除了SINGLE_INTERNAL_QUEUE（FIFO用的是这个），也许可以考虑试试别的？
   NS_LOG_FUNCTION (this);
   onoffTable = _onofftable;
+  m_laststate = TcdState::TCD_UNDETERMINED;
+  m_qState = TcdQueueState::TCD_CLEAR;
+  m_start_clear_time = Simulator::Now();
+  m_last_qsize = QueueSize("0p");
+  sem_init(&m_qlen_decrease_mutex, 0, 1);
+  updateQlenDecrease();
 }
 
 LosslessQueueDisc::~LosslessQueueDisc ()
@@ -106,20 +118,74 @@ LosslessQueueDisc::DoDequeue (void)
         //std::cout << "DoDequeue: queue empty.\n";
         return 0;
     }
-
+    
+    //item->Print(std::cout);
+  
+  try {
+    // Creepy pointer convertions.
+    const QueueDiscItem* itemptr = &(*item);
+    Ipv4QueueDiscItem* ipitem = (Ipv4QueueDiscItem*)itemptr;
+    
+    Ipv4Header hd = ipitem->GetHeader();
+    //std::cout << "Got Ipv4Header: " << hd << std::endl;
+    
+    // Find the destination device.
     Address destMAC = item -> GetAddress();
-    bool destOff = ! onoffTable -> getValue(destMAC); 
+    NodeContainer nc = this->onoffTable->getGlobalNodes();
+    Ptr<NetDevice> dv; // The destination device.
+    Ptr<Node> destNode; // The destination node.
+    bool found = 0;
+    //std::cout << "destMAC: " << destMAC << std::endl;
+    for (auto node = nc.Begin(); node!=nc.End(); node++){
+      uint32_t num = (*node) -> GetNDevices();
+      for (uint32_t k = 0; k + 1 != num; ++k) {
+        dv = (*node)->GetDevice(k);
+        //std::cout << "dv->GetAddress: " << dv->GetAddress() << std::endl;
+        if (dv->GetAddress() == destMAC){
+          found = 1;
+          destNode = *node;
+          //std::cout << "Found\n";
+          break;
+        }
+      }
+      if (found == 1) break;
+    }
+    if (found == 0){
+      throw "The device for the destination MAC is not found! (Maybe destMAC is BROADCAST?)";
+    }
+    
+    // Find where the packet will go in the next hop.
+    Socket::SocketErrno err; // The returned error number.
+    Ptr<GlobalRouter> gr = destNode->GetObject<GlobalRouter>();
+    //std::cout << "GlobalRouter: " << gr << std::endl;
+    Ptr<Ipv4GlobalRouting> router = gr->GetRoutingProtocol();
+    // The "0" in RouteOutput's inputs is explained in the docs (https://www.nsnam.org/doxygen/classns3_1_1_ipv4_global_routing.html#a569e54ce6542c3b88305140cce134d15)
+    Ptr<Ipv4Route> route = router->RouteOutput(ipitem->GetPacket(), hd, 0, err);
+    //std::cout << "err: " << err << std::endl;
+    //std::cout << "route: " << route << std::endl;
+    if (route == NULL){
+      throw "route is NULL (Reason unknown)";
+    }
+    Address nextQueueMAC = route->GetOutputDevice()->GetAddress();
+    //std::cout << "Device address of found route: " << nextQueueMAC << "\n";
+    //std::cout << "Packet with GetAddress() == " << destMAC << std::endl;
+    bool destOff = ! onoffTable -> getValue(nextQueueMAC); 
     
     if (destOff) {
         //std::cout << "The destination is blocked.\n";
         NS_LOG_LOGIC ("The queue front is blocked by an OFF destination.");
-        //onoffTable->printAll();
-        /* TODO: 把“this因为destOff而停住了”记录在全局表里，以便onoff表变on的时候，可以重新run这个queue。 */
+        reportOutputBlocked();
         onoffTable -> blockQueueAdding(destMAC, (ns3::Ptr<ns3::QueueDisc>)this);
         /* TODO: 在对象里记录下当前队列的长度k。 */
         return 0;
         // 外部可能会因为这里返回0而认为队列空了，从而停止run。如果发现了类似的bug，要记得往这方面想（并且打补丁）。
     }
+  }
+  catch (const char* msg){
+    std::cout << "Caught an exception!\n";
+    std::cout << msg << "\n";
+  }
+  reportOutputClear();
 
   Ptr<QueueDiscItem> realitem = GetInternalQueue (0)->Dequeue (); // not const
 
@@ -140,6 +206,7 @@ LosslessQueueDisc::DoDequeue (void)
   }
 
   //std::cout << "Returning item: " << realitem << "\n";
+  //std::cout<< "realitem GetAddress(): " << realitem->GetAddress()<<std::endl;
   return realitem;
 }
 
@@ -196,6 +263,81 @@ LosslessQueueDisc::InitializeParams (void)
 {
   NS_LOG_FUNCTION (this);
   blockedCnt = 0;
+}
+
+void LosslessQueueDisc::reportOutputClear(){
+  if (m_qState == TcdQueueState::TCD_BLOCKED){
+    // This is the first packet to send out after a BLOCKed period.
+    m_qState = TcdQueueState::TCD_CLEAR;
+    m_start_clear_time = Simulator::Now();
+  }
+  //std::cout << "LosslessQueueDisc " << this << " : A packet was successfully sent.\n";
+}
+
+void LosslessQueueDisc::reportOutputBlocked(){
+  std::cout << "LosslessQueueDisc " << this << " : A packet was blocked.\n";
+  m_qState = TcdQueueState::TCD_BLOCKED;
+}
+
+TcdState LosslessQueueDisc::getCurrentTCD(){
+  TcdState newState = m_laststate;
+
+  if (m_qState == TcdQueueState::TCD_BLOCKED){
+    std::cout << "ERROR! This algorithm is only right when the queue is CLEAR!\n";
+  }
+
+  Time t_on = Simulator::Now() - m_start_clear_time;
+  bool continuous_on = t_on > max_t_on;
+
+  QueueSize current_qsize = GetCurrentSize();
+  bool long_queue = current_qsize > tcdThreshold;
+  bool qlen_decrease = getQlenDecrease();
+
+  if (m_laststate == TcdState::TCD_NONCONGESTION){
+    if (continuous_on && long_queue){
+      newState = TcdState::TCD_CONGESTION;
+    }
+    if (!continuous_on){
+      newState = TcdState::TCD_UNDETERMINED;
+    }
+  }
+  else if (m_laststate == TcdState::TCD_CONGESTION){
+    if (continuous_on && !long_queue){
+      newState = TcdState::TCD_NONCONGESTION;
+    }
+    if (!continuous_on){
+      newState = TcdState::TCD_UNDETERMINED;
+    }
+  }
+  else if (m_laststate == TcdState::TCD_UNDETERMINED){
+    if (continuous_on && (qlen_decrease || !long_queue)){
+      newState = TcdState::TCD_NONCONGESTION;
+    }
+    if (continuous_on && (!qlen_decrease && long_queue)){
+      newState = TcdState::TCD_CONGESTION;
+    }
+  }
+  
+  m_laststate = newState;
+  m_last_qsize = current_qsize;
+  return newState;
+}
+
+bool LosslessQueueDisc::getQlenDecrease(){
+  sem_wait(&m_qlen_decrease_mutex);
+  bool res = m_qlen_decrease;
+  sem_post(&m_qlen_decrease_mutex);
+  return res;
+}
+
+void LosslessQueueDisc::updateQlenDecrease(){
+  sem_wait(&m_qlen_decrease_mutex);
+  QueueSize curlen = GetCurrentSize();
+  m_qlen_decrease = curlen < m_last_qsize;
+  m_last_qsize = curlen;
+  sem_post(&m_qlen_decrease_mutex);
+  // Do this after each qsize_decrease_update_interval.
+  Simulator::Schedule(qsize_decrease_update_interval, &LosslessQueueDisc::updateQlenDecrease, this);
 }
 
 } // namespace ns3

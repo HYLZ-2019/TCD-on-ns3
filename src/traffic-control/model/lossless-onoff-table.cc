@@ -48,14 +48,14 @@ void LosslessOnoffTable::addNetDevice(Address addr) { //把这个device address�
 }
 
 void LosslessOnoffTable::setValue(Address addr, bool value) {
-   //std :: cout << "LosslessOnoffTable " << this << " : setValue(" << addr << ", " << value << ")\n";
+    //std :: cout << "LosslessOnoffTable " << this << " : setValue(" << addr << ", " << value << ")\n";
     NS_LOG_FUNCTION (this);
     sem_wait(&mutex);
     std :: map <Address, bool> :: iterator it = ONOFFlist.find(addr);
     if (it == ONOFFlist.end()) {    
         ONOFFlist[addr] = value; // This should be on->off, because the queue is default on.
         sem_post(&mutex);
-       // std :: cout << "LosslessOnoffTable " << this << " : setValue(" << addr << ", " << value << ") -> added new value\n";
+        //std :: cout << "LosslessOnoffTable " << this << " : setValue(" << addr << ", " << value << ") -> added new value\n";
         return;
     }
 
@@ -69,6 +69,7 @@ void LosslessOnoffTable::setValue(Address addr, bool value) {
     sem_post(&mutex);
 
     if (value) {     // if OFF -> ON  RUN the blockQueue
+        std :: cout << "LosslessOnoffTable " << this << " : setValue(" << addr << ", " << value << ") -> OFF to ON\n";
         while (true) {
             sem_wait(&BQ);
             auto pos = blockQueue.equal_range(addr);
@@ -84,7 +85,6 @@ void LosslessOnoffTable::setValue(Address addr, bool value) {
 
             qDisc->Run ();
         }
-        //std :: cout << "LosslessOnoffTable " << this << " : setValue(" << addr << ", " << value << ") -> OFF to ON\n";
     }
     else {
         //std :: cout << "LosslessOnoffTable " << this << " : setValue(" << addr << ", " << value << ") -> ON to OFF !!\n";
@@ -140,6 +140,14 @@ void LosslessOnoffTable::printAll(){
         std::cout << it->first << "  blocks  " << it->second << "\n";
     }
     sem_post(&mutex);*/
+}
+
+void LosslessOnoffTable::setGlobalNodes(NodeContainer nodes){
+    globalNodes = nodes;
+}
+
+NodeContainer LosslessOnoffTable::getGlobalNodes(){
+    return globalNodes;
 }
 
 } //namespace ns3
