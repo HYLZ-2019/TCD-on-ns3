@@ -275,7 +275,7 @@ void LosslessQueueDisc::reportOutputClear(){
 }
 
 void LosslessQueueDisc::reportOutputBlocked(){
-  std::cout << "LosslessQueueDisc " << this << " : A packet was blocked.\n";
+  //std::cout << "LosslessQueueDisc " << this << " : A packet was blocked.\n";
   m_qState = TcdQueueState::TCD_BLOCKED;
 }
 
@@ -283,7 +283,7 @@ TcdState LosslessQueueDisc::getCurrentTCD(){
   TcdState newState = m_laststate;
 
   if (m_qState == TcdQueueState::TCD_BLOCKED){
-    std::cout << "ERROR! This algorithm is only right when the queue is CLEAR!\n";
+    //std::cout << "ERROR! This algorithm is only right when the queue is CLEAR!\n";
   }
 
   Time t_on = Simulator::Now() - m_start_clear_time;

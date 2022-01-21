@@ -1125,6 +1125,7 @@ UdpSocketImpl::ForwardIcmp (Ipv4Address icmpSource, uint8_t icmpTtl,
 {
   NS_LOG_FUNCTION (this << icmpSource << (uint32_t)icmpTtl << (uint32_t)icmpType <<
                    (uint32_t)icmpCode << icmpInfo);
+  std::cout << "Impl::ForwardIcmp() is called.\n";
   if (!m_icmpCallback.IsNull ())
     {
       m_icmpCallback (icmpSource, icmpTtl, icmpType, icmpCode, icmpInfo);
@@ -1138,6 +1139,7 @@ UdpSocketImpl::ForwardIcmp6 (Ipv6Address icmpSource, uint8_t icmpTtl,
 {
   NS_LOG_FUNCTION (this << icmpSource << (uint32_t)icmpTtl << (uint32_t)icmpType <<
                    (uint32_t)icmpCode << icmpInfo);
+  std::cout << "Impl::ForwardIcmp6() is called.\n";
   if (!m_icmpCallback6.IsNull ())
     {
       m_icmpCallback6 (icmpSource, icmpTtl, icmpType, icmpCode, icmpInfo);

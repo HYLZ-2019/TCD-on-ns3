@@ -31,14 +31,14 @@
 
 #include "udp-l4-protocol.h"
 #include "udp-header.h"
-#include "udp-socket-factory-dcqcn.h"
+#include "udp-socket-factory-impl.h"
 #include "ipv4-end-point-demux.h"
 #include "ipv4-end-point.h"
 #include "ipv6-end-point-demux.h"
 #include "ipv6-end-point.h"
 #include "ipv4-l3-protocol.h"
 #include "ipv6-l3-protocol.h"
-#include "udp-socket-dcqcn.h"
+#include "udp-socket-impl.h"
 
 namespace ns3 {
 
@@ -59,7 +59,7 @@ UdpL4Protocol::GetTypeId (void)
     .AddAttribute ("SocketList", "The list of sockets associated to this protocol.",
                    ObjectVectorValue (),
                    MakeObjectVectorAccessor (&UdpL4Protocol::m_sockets),
-                   MakeObjectVectorChecker<UdpSocketDcqcn> ())
+                   MakeObjectVectorChecker<UdpSocketImpl> ())
   ;
   return tid;
 }
@@ -99,7 +99,7 @@ UdpL4Protocol::NotifyNewAggregate ()
       if ((node != 0) && (ipv4 != 0 || ipv6 != 0))
         {
           this->SetNode (node);
-          Ptr<UdpSocketFactoryDcqcn> udpFactory = CreateObject<UdpSocketFactoryDcqcn> ();
+          Ptr<UdpSocketFactoryImpl> udpFactory = CreateObject<UdpSocketFactoryImpl> ();
           udpFactory->SetUdp (this);
           node->AggregateObject (udpFactory);
         }
@@ -134,7 +134,7 @@ void
 UdpL4Protocol::DoDispose (void)
 {
   NS_LOG_FUNCTION (this);
-  for (std::vector<Ptr<UdpSocketDcqcn> >::iterator i = m_sockets.begin (); i != m_sockets.end (); i++)
+  for (std::vector<Ptr<UdpSocketImpl> >::iterator i = m_sockets.begin (); i != m_sockets.end (); i++)
     {
       *i = 0;
     }
@@ -163,7 +163,7 @@ Ptr<Socket>
 UdpL4Protocol::CreateSocket (void)
 {
   NS_LOG_FUNCTION (this);
-  Ptr<UdpSocketDcqcn> socket = CreateObject<UdpSocketDcqcn> ();
+  Ptr<UdpSocketImpl> socket = CreateObject<UdpSocketImpl> ();
   socket->SetNode (m_node);
   socket->SetUdp (this);
   m_sockets.push_back (socket);
