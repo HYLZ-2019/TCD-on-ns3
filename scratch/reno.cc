@@ -318,17 +318,20 @@ int main (int argc, char *argv[])
   qd.Get (0)->TraceConnectWithoutContext ("Drop", MakeBoundCallback (&DropAtQueue, streamWrapper));
 
   // Install packet sink at receiver side
-  uint16_t port = 50000;
-  InstallPacketSink (nodes.Get (n-1), port, socketFactory);
+  uint16_t port1 = 50000;
+  //uint16_t port2 = 3;
+  InstallPacketSink (nodes.Get (3), port1, socketFactory);
+  //InstallPacketSink (nodes.Get (3), port2, socketFactory);
 
   // Install BulkSend application
   //InstallBulkSend (leftNodes.Get (0), routerToRightIPAddress [0].GetAddress (1), port, socketFactory, 2, 0, MakeCallback (&CwndChange));
   //InstallBulkSend (leftNodes.Get (0), routerToRightIPAddress [0].GetAddress (1), port, socketFactory);
-  InstallOnOffSend (nodes.Get (0), IPAddresses [m - 1].GetAddress (1), port, socketFactory, 
+  InstallOnOffSend (nodes.Get (0), IPAddresses [2].GetAddress (1), port1, socketFactory, 
                     "ns3::ConstantRandomVariable[Constant=1]", "ns3::ConstantRandomVariable[Constant=0]", 
                     1024, "1Mbps");
 
   globalOnoffTable->setGlobalNodes(nodes);
+
 
   // Enable PCAP on all the point to point interfaces
   channelHelpers[0].EnablePcapAll (dir + "pcap/ns-3", true);

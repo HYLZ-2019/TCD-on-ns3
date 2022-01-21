@@ -446,6 +446,7 @@ UdpSocketImpl::Send (Ptr<Packet> p, uint32_t flags)
 int 
 UdpSocketImpl::DoSend (Ptr<Packet> p)
 {
+  //发之前看一下socket的local端地址
   NS_LOG_FUNCTION (this << p);
   if ((m_endPoint == 0) && (Ipv4Address::IsMatchingType(m_defaultAddress) == true))
     {
@@ -488,6 +489,7 @@ int
 UdpSocketImpl::DoSendTo (Ptr<Packet> p, Ipv4Address dest, uint16_t port, uint8_t tos)
 {
   NS_LOG_FUNCTION (this << p << dest << port << (uint16_t) tos);
+  std::cout << "UdpSocketImpl()::DoSendTo is called.\n";
   if (m_boundnetdevice)
     {
       NS_LOG_LOGIC ("Bound interface number " << m_boundnetdevice->GetIfIndex ());
@@ -571,7 +573,7 @@ UdpSocketImpl::DoSendTo (Ptr<Packet> p, Ipv4Address dest, uint16_t port, uint8_t
 
   // Note that some systems will only send limited broadcast packets
   // out of the "default" interface; here we send it out all interfaces
-  if (dest.IsBroadcast ())
+  if (dest.IsBroadcast ()) //广播
     {
       if (!m_allowBroadcast)
         {
@@ -1001,6 +1003,7 @@ UdpSocketImpl::ForwardUp (Ptr<Packet> packet, Ipv4Header header, uint16_t port,
 {
   NS_LOG_FUNCTION (this << packet << header << port);
 
+  std::cout << "Impl::ForwardUp() is called.\n";
   if (m_shutdownRecv)
     {
       return;
@@ -1060,11 +1063,11 @@ UdpSocketImpl::ForwardUp6 (Ptr<Packet> packet, Ipv6Header header, uint16_t port,
 {
   NS_LOG_FUNCTION (this << packet << header.GetSource () << port);
 
+  std::cout << "Impl::ForwardUp6() is called.\n";
   if (m_shutdownRecv)
     {
       return;
     }
-
   // Should check via getsockopt ().
   if (IsRecvPktInfo ())
     {

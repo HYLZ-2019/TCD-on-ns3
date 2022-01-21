@@ -87,7 +87,7 @@ void LosslessOnoffTable::setValue(Address addr, bool value) {
         }
     }
     else {
-        std :: cout << "LosslessOnoffTable " << this << " : setValue(" << addr << ", " << value << ") -> ON to OFF !!\n";
+        //std :: cout << "LosslessOnoffTable " << this << " : setValue(" << addr << ", " << value << ") -> ON to OFF !!\n";
     }
     
     return;
@@ -125,6 +125,7 @@ void LosslessOnoffTable::blockQueueAdding(Address addr, Ptr<QueueDisc> qdisc) {
 }
 
 void LosslessOnoffTable::printAll(){
+    /*
     NS_LOG_FUNCTION (this);
     sem_wait(&mutex);
     if (ONOFFlist.empty()){
@@ -138,7 +139,7 @@ void LosslessOnoffTable::printAll(){
     for (auto it = ONOFFlist.begin(); it != ONOFFlist.end(); it++){
         std::cout << it->first << "  blocks  " << it->second << "\n";
     }
-    sem_post(&mutex);
+    sem_post(&mutex);*/
 }
 
 void LosslessOnoffTable::setGlobalNodes(NodeContainer nodes){

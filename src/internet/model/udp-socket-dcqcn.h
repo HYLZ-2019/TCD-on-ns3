@@ -11,6 +11,10 @@
 #include "ns3/ipv4-address.h"
 #include "ns3/udp-socket.h"
 #include "ns3/ipv4-interface.h"
+#include "ns3/data-rate.h"
+#include "ns3/tag.h"
+#include "ns3/packet.h"
+#include "ns3/uinteger.h"
 #include "icmpv4.h" //这个是原来ICMP包的报头，可以考虑复用或者替换
 
 namespace ns3 {
@@ -33,9 +37,22 @@ class Ipv6Interface;
  * to ns3's implementation of UDP.
  */
 //这个DCQCN的原型是IMPL,我们需要做的是把send, receive替换成带有拥塞控制的版本，如果有新的数据结构就放到这个类里
+class BufferItem{ //定义Item类型方便管理
+public:
+	Ptr<Packet> p;
+	Ipv4Address dest;
+	uint16_t port; 
+	uint8_t tos;
+	BufferItem(Ptr<Packet> _p, Ipv4Address _dest, uint16_t _port, uint8_t _tos) {
+		p = _p, dest = _dest, port = _port, tos = _tos;
+	}
+};
+
+
 class UdpSocketDcqcn : public UdpSocket
 {
 public:
+  static const uint32_t maxHop = 1; // Max hop count in the network. should not exceed 16 
   /**
    * \brief Get the type ID.
    * \return the object TypeId
@@ -112,6 +129,10 @@ private:
    */
   int FinishBind (void);
 
+  void DequeueAndTransmit(void);
+  void TransmitStart(Ptr<Packet> p);
+  void TransmitComplete(void);
+
   /**
    * \brief Called by the L3 protocol when it received a packet to pass on to TCP.
    *
@@ -168,6 +189,8 @@ private:
    * \returns 0 on success, -1 on failure
    */
   int DoSendTo (Ptr<Packet> p, Ipv4Address daddr, uint16_t dport, uint8_t tos);
+  int DoSendTo (Ptr<Packet> p, Ipv4Address daddr, uint16_t dport);
+  int wrapDoSendTo(Ptr<Packet> p, Ipv4Address dest, uint16_t port, uint8_t tos);  // why wrap?
   /**
    * \brief Send a packet to a specific destination and port (IPv6)
    * \param p packet
@@ -176,6 +199,7 @@ private:
    * \returns 0 on success, -1 on failure
    */
   int DoSendTo (Ptr<Packet> p, Ipv6Address daddr, uint16_t dport);
+  //int wrapDoSendTo(Ptr<Packet> p, Ipv6Address dest, uint16_t port); 
 
   /**
    * \brief Called by the L3 protocol when it received an ICMP packet to pass on to TCP.
@@ -198,6 +222,39 @@ private:
    * \param icmpInfo the ICMP Info
    */
   void ForwardIcmp6 (Ipv6Address icmpSource, uint8_t icmpTtl, uint8_t icmpType, uint8_t icmpCode, uint32_t icmpInfo);
+
+   /**
+   * Enumeration of the states of the transmit machine of the net device.
+   */
+  enum TxMachineState
+  {
+    READY,   /**< The transmitter is ready to begin transmission of a packet */
+    BUSY,    /**< The transmitter is busy transmitting a packet */
+    GAP,      /**< The transmitter is in the interframe gap time */
+    BACKOFF      /**< The transmitter is waiting for the channel to be free */
+  };
+
+  /**
+   * The state of the Net Device transmit state machine.
+   * \see TxMachineState
+   */
+  TxMachineState m_txMachineState;
+  Ptr<Packet> m_currentPkt;
+  DataRate    m_bps;
+  Time m_tInterframeGap;
+  double m_rpgTimeReset;
+  EventId m_rptimer[maxHop];  // 去掉了fcnt
+  uint32_t m_rpgThreshold;
+  DataRate m_rai;		//< Rate of additive increase
+  DataRate m_rhai;		//< Rate of hyper-additive increase
+  DataRate m_minRate;		//< Min sending rate
+  uint32_t m_bc;
+  bool m_EcnClampTgtRateAfterTimeInc;
+  bool m_EcnClampTgtRate;
+  double m_alpha[maxHop];
+  double m_alpha_resume_interval;
+  double m_g;
+  EventId  m_nextSend;		//< The next send event
 
   // Connections to other layers of TCP/IP
   Ipv4EndPoint*       m_endPoint;   //!< the IPv4 endpoint
@@ -226,6 +283,89 @@ private:
   int32_t m_ipMulticastIf;  //!< Multicast Interface
   bool m_ipMulticastLoop;   //!< Allow multicast loop
   bool m_mtuDiscover;       //!< Allow MTU discovery
+  
+  //加入新组件sendingBuffer
+  std :: queue <BufferItem> m_sendingBuffer;
+  
+  EventId m_resumeAlpha[maxHop];
+  DataRate m_rateAll[maxHop];
+
+  DataRate m_targetRate[maxHop];	//< Target rate
+  DataRate m_rate;	//< Current rate
+  int64_t  m_txBytes[maxHop];	//< Tx byte counter
+  double  m_rpWhile[maxHop];	//< Tx byte counter
+  uint32_t m_rpByteStage[maxHop];	//< Count of Tx-based rate increments
+  uint32_t m_rpTimeStage[maxHop];
+  uint32_t m_rpStage[maxHop]; //1: fr; 2: ai; 3: hi
+  Time     m_nextAvail;	//< Soonest time of next send
+  double   m_credits;	//< Credits accumulated
+  EventId m_rateIncrease; // rate increase event (QCN)
+  uint8_t m_ecnbits;
+	uint16_t m_qfb;
+	uint16_t m_total;
+  
+  void ResumeAlpha(uint32_t hop);
+  void AdjustRates(uint32_t hop, DataRate increase);
+  void rpr_adjust_rates(uint32_t hop);
+  void rpr_fast_recovery(uint32_t hop);
+  void rpr_active_increase(uint32_t hop);
+  void rpr_active_byte(uint32_t hop);
+  void rpr_active_time(uint32_t hop);
+  void rpr_fast_byte(uint32_t hop);
+  void rpr_fast_time(uint32_t hop);
+  void rpr_hyper_byte(uint32_t hop);
+  void rpr_hyper_time(uint32_t hop);
+  void rpr_active_select(uint32_t hop);
+  void rpr_hyper_increase(uint32_t hop);
+  void rpr_cnm_received(uint32_t hop, double fraction);
+  void rpr_timer_wrapper(uint32_t hop);
+};
+
+class MyTag : public Tag
+{
+public:
+  /**
+   * \brief Get the type ID.
+   * \return the object TypeId
+   */
+  static TypeId GetTypeId (void);
+  virtual TypeId GetInstanceTypeId (void) const;
+  virtual uint32_t GetSerializedSize (void) const;
+  virtual void Serialize (TagBuffer i) const;
+  virtual void Deserialize (TagBuffer i);
+  virtual void Print (std::ostream &os) const;
+
+  // these are our accessors to our tag structure
+  /**
+   * Set the tag value
+   * \param value The tag value.
+   */
+  void SetSimpleValue (uint8_t value);
+  /**
+   * Get the tag value
+   * \return the tag value.
+   */
+  uint8_t GetSimpleValue (void) const;
+private:
+  uint8_t m_simpleValue;  //!< tag value
+};
+
+class SocketAddressTag : public Tag
+{
+public:
+  SocketAddressTag ();
+  void SetAddress (Address addr);
+  Address GetAddress (void) const;
+
+  static TypeId GetTypeId (void);
+  virtual TypeId GetInstanceTypeId (void) const;
+  virtual uint32_t GetSerializedSize (void) const;
+  virtual void Serialize (TagBuffer i) const;
+  virtual void Deserialize (TagBuffer i);
+  virtual void Print (std::ostream &os) const;
+
+private:
+  Address m_address;
 };
 
 } // namespace ns3

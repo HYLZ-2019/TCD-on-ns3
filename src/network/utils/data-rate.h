@@ -185,6 +185,9 @@ public:
    * \param rhs the uint64_t to multipy to this datarate
    */
   DataRate& operator *= (uint64_t rhs);
+  DataRate operator / (double rhs);
+  DataRate& operator /= (double rhs);
+  friend DataRate operator / (double lhs, DataRate& rhs);
 
 
   /**

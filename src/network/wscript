@@ -71,7 +71,7 @@ def build(bld):
         'helper/packet-socket-helper.cc',
         'helper/trace-helper.cc',
         'helper/delay-jitter-estimation.cc',
-        'helper/simple-net-device-helper.cc'
+        'helper/simple-net-device-helper.cc',
         ]
 
     network_test = bld.create_ns3_module_test_library('network')

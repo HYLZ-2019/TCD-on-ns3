@@ -31,14 +31,14 @@
 
 #include "udp-l4-protocol.h"
 #include "udp-header.h"
-#include "udp-socket-factory-impl.h"
+#include "udp-socket-factory-dcqcn.h"
 #include "ipv4-end-point-demux.h"
 #include "ipv4-end-point.h"
 #include "ipv6-end-point-demux.h"
 #include "ipv6-end-point.h"
 #include "ipv4-l3-protocol.h"
 #include "ipv6-l3-protocol.h"
-#include "udp-socket-impl.h"
+#include "udp-socket-dcqcn.h"
 
 namespace ns3 {
 
@@ -59,7 +59,7 @@ UdpL4Protocol::GetTypeId (void)
     .AddAttribute ("SocketList", "The list of sockets associated to this protocol.",
                    ObjectVectorValue (),
                    MakeObjectVectorAccessor (&UdpL4Protocol::m_sockets),
-                   MakeObjectVectorChecker<UdpSocketImpl> ())
+                   MakeObjectVectorChecker<UdpSocketDcqcn> ())
   ;
   return tid;
 }
@@ -99,7 +99,7 @@ UdpL4Protocol::NotifyNewAggregate ()
       if ((node != 0) && (ipv4 != 0 || ipv6 != 0))
         {
           this->SetNode (node);
-          Ptr<UdpSocketFactoryImpl> udpFactory = CreateObject<UdpSocketFactoryImpl> ();
+          Ptr<UdpSocketFactoryDcqcn> udpFactory = CreateObject<UdpSocketFactoryDcqcn> ();
           udpFactory->SetUdp (this);
           node->AggregateObject (udpFactory);
         }
@@ -134,7 +134,7 @@ void
 UdpL4Protocol::DoDispose (void)
 {
   NS_LOG_FUNCTION (this);
-  for (std::vector<Ptr<UdpSocketImpl> >::iterator i = m_sockets.begin (); i != m_sockets.end (); i++)
+  for (std::vector<Ptr<UdpSocketDcqcn> >::iterator i = m_sockets.begin (); i != m_sockets.end (); i++)
     {
       *i = 0;
     }
@@ -163,7 +163,7 @@ Ptr<Socket>
 UdpL4Protocol::CreateSocket (void)
 {
   NS_LOG_FUNCTION (this);
-  Ptr<UdpSocketImpl> socket = CreateObject<UdpSocketImpl> ();
+  Ptr<UdpSocketDcqcn> socket = CreateObject<UdpSocketDcqcn> ();
   socket->SetNode (m_node);
   socket->SetUdp (this);
   m_sockets.push_back (socket);
@@ -268,6 +268,7 @@ UdpL4Protocol::ReceiveIcmp (Ipv4Address icmpSource, uint8_t icmpTtl,
 {
   NS_LOG_FUNCTION (this << icmpSource << icmpTtl << icmpType << icmpCode << icmpInfo 
                         << payloadSource << payloadDestination);
+  std::cout << "UdpL4Protocol::ReceiveIcmp Case1\n";
   uint16_t src, dst;
   src = payload[0] << 8;
   src |= payload[1];
@@ -295,6 +296,8 @@ UdpL4Protocol::ReceiveIcmp (Ipv6Address icmpSource, uint8_t icmpTtl,
 {
   NS_LOG_FUNCTION (this << icmpSource << icmpTtl << icmpType << icmpCode << icmpInfo 
                         << payloadSource << payloadDestination);
+
+  std::cout << "UdpL4Protocol::ReceiveIcmp Case2\n";
   uint16_t src, dst;
   src = payload[0] << 8;
   src |= payload[1];
@@ -320,6 +323,7 @@ UdpL4Protocol::Receive (Ptr<Packet> packet,
                         Ptr<Ipv4Interface> interface)
 {
   NS_LOG_FUNCTION (this << packet << header);
+  std::cout << "UdpL4Protocol::Receive Case1\n";
   UdpHeader udpHeader;
   if(Node::ChecksumEnabled ())
     {
@@ -379,6 +383,7 @@ UdpL4Protocol::Receive (Ptr<Packet> packet,
                         Ptr<Ipv6Interface> interface)
 {
   NS_LOG_FUNCTION (this << packet << header.GetSource () << header.GetDestination ());
+  std::cout << "UdpL4Protocol::Receive Case2\n";
   UdpHeader udpHeader;
   if(Node::ChecksumEnabled ())
     {
@@ -419,6 +424,7 @@ UdpL4Protocol::Send (Ptr<Packet> packet,
 {
   NS_LOG_FUNCTION (this << packet << saddr << daddr << sport << dport);
 
+  //std::cout << "UdpL4Protocol::Send() is called.\n";
   UdpHeader udpHeader;
   if(Node::ChecksumEnabled ())
     {
@@ -442,6 +448,7 @@ UdpL4Protocol::Send (Ptr<Packet> packet,
 {
   NS_LOG_FUNCTION (this << packet << saddr << daddr << sport << dport << route);
 
+  //std::cout << "2 UdpL4Protocol::Send() is called.\n";
   UdpHeader udpHeader;
   if(Node::ChecksumEnabled ())
     {
@@ -465,6 +472,7 @@ UdpL4Protocol::Send (Ptr<Packet> packet,
 {
   NS_LOG_FUNCTION (this << packet << saddr << daddr << sport << dport);
 
+  std::cout << "3 UdpL4Protocol::Send() is called.\n";
   UdpHeader udpHeader;
   if(Node::ChecksumEnabled ())
     {
@@ -488,6 +496,7 @@ UdpL4Protocol::Send (Ptr<Packet> packet,
 {
   NS_LOG_FUNCTION (this << packet << saddr << daddr << sport << dport << route);
 
+  std::cout << "4 UdpL4Protocol::Send() is called.\n";
   UdpHeader udpHeader;
   if(Node::ChecksumEnabled ())
     {

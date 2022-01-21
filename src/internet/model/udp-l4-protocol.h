@@ -35,7 +35,7 @@ class Ipv4EndPointDemux;
 class Ipv4EndPoint;
 class Ipv6EndPointDemux;
 class Ipv6EndPoint;
-class UdpSocketImpl;
+class UdpSocketDcqcn;
 class NetDevice;
 
 /**
@@ -271,7 +271,7 @@ private:
    */
   UdpL4Protocol &operator = (const UdpL4Protocol &);
 
-  std::vector<Ptr<UdpSocketImpl> > m_sockets;      //!< list of sockets
+  std::vector<Ptr<UdpSocketDcqcn> > m_sockets;      //!< list of sockets
   IpL4Protocol::DownTargetCallback m_downTarget;   //!< Callback to send packets over IPv4
   IpL4Protocol::DownTargetCallback6 m_downTarget6; //!< Callback to send packets over IPv6
 
