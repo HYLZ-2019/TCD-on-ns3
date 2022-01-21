@@ -125,6 +125,14 @@ void InstallPacketSink (Ptr<Node> node, uint16_t port, std::string socketFactory
   sinkApps.Stop (stopTime);
 }
 
+void InstallUdpSever(Ptr<Node> node, uint16_t port) 
+{
+  UdpServerHelper server (port);
+  ApplicationContainer apps = server.Install (node);
+  apps.Start (Seconds (1.0));
+  apps.Stop (stopTime);
+}
+
 LosslessOnoffTable* globalOnoffTable;
 
 int n, m;
@@ -138,7 +146,7 @@ QueueDiscContainer qd;
 std::vector <std::string> ipBase;
 std::vector <std::string> ipMask;
 
-std::string qdiscTypeId = "ns3::LosslessQueueDisc"; 
+std::string qdiscTypeId = "ns3::FifoQueueDisc"; 
 //这个是装在TC Layer上的队列type, 现在把它改成on-off model的，
 
 //我们要新造一个qdiscType，它需要用另一种和routing包平行的包来和相邻的router交流堵塞信息，并据此更新自己的路由表。
@@ -320,7 +328,8 @@ int main (int argc, char *argv[])
   // Install packet sink at receiver side
   uint16_t port1 = 50000;
   //uint16_t port2 = 3;
-  InstallPacketSink (nodes.Get (3), port1, socketFactory);
+  InstallUdpSever(nodes.Get (3), port1);
+  //InstallPacketSink (nodes.Get (3), port1, socketFactory);
   //InstallPacketSink (nodes.Get (3), port2, socketFactory);
 
   // Install BulkSend application
