@@ -52,6 +52,7 @@ public:
 class UdpSocketDcqcn : public UdpSocket
 {
 public:
+  uint32_t m_socketID;
   static const uint32_t maxHop = 1; // Max hop count in the network. should not exceed 16 
   /**
    * \brief Get the type ID.

@@ -97,6 +97,8 @@ UdpSocketDcqcn::UdpSocketDcqcn ()
 {
   NS_LOG_FUNCTION (this);
   m_allowBroadcast = false;
+  static uint32_t socketNum = 0;
+  m_socketID = ++socketNum;
 }
 
 UdpSocketDcqcn::~UdpSocketDcqcn ()
@@ -1487,7 +1489,7 @@ UdpSocketDcqcn::ForwardUp (Ptr<Packet> packet, Ipv4Header header, uint16_t port,
                           Ptr<Ipv4Interface> incomingInterface)
 {
 	NS_LOG_FUNCTION (this << packet << header << port);
-  std::cout << "DCQCN::ForwardUp() is called.\n";
+  std::cout << "socketID="<< m_socketID<<", DCQCN::ForwardUp() is called.\n";
 	if (m_shutdownRecv) {
 		return;
 	}
