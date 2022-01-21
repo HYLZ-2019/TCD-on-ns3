@@ -69,6 +69,7 @@ void LosslessOnoffTable::setValue(Address addr, bool value) {
     sem_post(&mutex);
 
     if (value) {     // if OFF -> ON  RUN the blockQueue
+        std :: cout << "LosslessOnoffTable " << this << " : setValue(" << addr << ", " << value << ") -> OFF to ON\n";
         while (true) {
             sem_wait(&BQ);
             auto pos = blockQueue.equal_range(addr);
@@ -84,10 +85,9 @@ void LosslessOnoffTable::setValue(Address addr, bool value) {
 
             qDisc->Run ();
         }
-        //std :: cout << "LosslessOnoffTable " << this << " : setValue(" << addr << ", " << value << ") -> OFF to ON\n";
     }
     else {
-        //std :: cout << "LosslessOnoffTable " << this << " : setValue(" << addr << ", " << value << ") -> ON to OFF !!\n";
+        std :: cout << "LosslessOnoffTable " << this << " : setValue(" << addr << ", " << value << ") -> ON to OFF !!\n";
     }
     
     return;

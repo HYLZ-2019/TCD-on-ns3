@@ -119,7 +119,7 @@ LosslessQueueDisc::DoDequeue (void)
         return 0;
     }
     
-    item->Print(std::cout);
+    //item->Print(std::cout);
   
   try {
     // Creepy pointer convertions.
@@ -127,7 +127,7 @@ LosslessQueueDisc::DoDequeue (void)
     Ipv4QueueDiscItem* ipitem = (Ipv4QueueDiscItem*)itemptr;
     
     Ipv4Header hd = ipitem->GetHeader();
-    std::cout << "Got Ipv4Header: " << hd << std::endl;
+    //std::cout << "Got Ipv4Header: " << hd << std::endl;
     
     // Find the destination device.
     Address destMAC = item -> GetAddress();
@@ -135,16 +135,16 @@ LosslessQueueDisc::DoDequeue (void)
     Ptr<NetDevice> dv; // The destination device.
     Ptr<Node> destNode; // The destination node.
     bool found = 0;
-    std::cout << "destMAC: " << destMAC << std::endl;
+    //std::cout << "destMAC: " << destMAC << std::endl;
     for (auto node = nc.Begin(); node!=nc.End(); node++){
       uint32_t num = (*node) -> GetNDevices();
       for (uint32_t k = 0; k + 1 != num; ++k) {
         dv = (*node)->GetDevice(k);
-        std::cout << "dv->GetAddress: " << dv->GetAddress() << std::endl;
+        //std::cout << "dv->GetAddress: " << dv->GetAddress() << std::endl;
         if (dv->GetAddress() == destMAC){
           found = 1;
           destNode = *node;
-          std::cout << "Found\n";
+          //std::cout << "Found\n";
           break;
         }
       }
@@ -157,17 +157,17 @@ LosslessQueueDisc::DoDequeue (void)
     // Find where the packet will go in the next hop.
     Socket::SocketErrno err; // The returned error number.
     Ptr<GlobalRouter> gr = destNode->GetObject<GlobalRouter>();
-    std::cout << "GlobalRouter: " << gr << std::endl;
+    //std::cout << "GlobalRouter: " << gr << std::endl;
     Ptr<Ipv4GlobalRouting> router = gr->GetRoutingProtocol();
     // The "0" in RouteOutput's inputs is explained in the docs (https://www.nsnam.org/doxygen/classns3_1_1_ipv4_global_routing.html#a569e54ce6542c3b88305140cce134d15)
     Ptr<Ipv4Route> route = router->RouteOutput(ipitem->GetPacket(), hd, 0, err);
-    std::cout << "err: " << err << std::endl;
-    std::cout << "route: " << route << std::endl;
+    //std::cout << "err: " << err << std::endl;
+    //std::cout << "route: " << route << std::endl;
     if (route == NULL){
       throw "route is NULL (Reason unknown)";
     }
     Address nextQueueMAC = route->GetOutputDevice()->GetAddress();
-    std::cout << "Device address of found route: " << nextQueueMAC << "\n";
+    //std::cout << "Device address of found route: " << nextQueueMAC << "\n";
     //std::cout << "Packet with GetAddress() == " << destMAC << std::endl;
     bool destOff = ! onoffTable -> getValue(nextQueueMAC); 
     
@@ -271,9 +271,11 @@ void LosslessQueueDisc::reportOutputClear(){
     m_qState = TcdQueueState::TCD_CLEAR;
     m_start_clear_time = Simulator::Now();
   }
+  //std::cout << "LosslessQueueDisc " << this << " : A packet was successfully sent.\n";
 }
 
 void LosslessQueueDisc::reportOutputBlocked(){
+  std::cout << "LosslessQueueDisc " << this << " : A packet was blocked.\n";
   m_qState = TcdQueueState::TCD_BLOCKED;
 }
 
