@@ -125,6 +125,28 @@ void InstallPacketSink (Ptr<Node> node, uint16_t port, std::string socketFactory
   sinkApps.Stop (stopTime);
 }
 
+void InstallUdpSever(Ptr<Node> node, uint16_t port) 
+{
+  UdpServerHelper server (port);
+  ApplicationContainer apps = server.Install (node);
+  apps.Start (Seconds (1.0));
+  apps.Stop (stopTime);
+}
+
+void InstallUdpClient(Ptr<Node> node, Address addr, uint16_t port, Time interval, uint32_t MaxPacketSize, uint32_t maxPacketCount)
+{
+  //uint32_t MaxPacketSize = 1024;
+  //Time interPacketInterval = Seconds (0.05);
+  //uint32_t maxPacketCount = 320;
+  UdpClientHelper client (addr, port);
+  client.SetAttribute ("MaxPackets", UintegerValue (maxPacketCount));
+  client.SetAttribute ("Interval", TimeValue (interval));
+  client.SetAttribute ("PacketSize", UintegerValue (MaxPacketSize));
+  ApplicationContainer apps = client.Install (node);
+  apps.Start (Seconds (1.0));
+  apps.Stop (stopTime);
+}
+
 LosslessOnoffTable* globalOnoffTable;
 
 int n, m;
@@ -320,18 +342,20 @@ int main (int argc, char *argv[])
   // Install packet sink at receiver side
   uint16_t port1 = 50000;
   //uint16_t port2 = 3;
-  InstallPacketSink (nodes.Get (3), port1, socketFactory);
+  InstallUdpSever(nodes.Get(3), port1);
+  //InstallPacketSink (nodes.Get (3), port1, socketFactory);
   //InstallPacketSink (nodes.Get (3), port2, socketFactory);
 
   // Install BulkSend application
   //InstallBulkSend (leftNodes.Get (0), routerToRightIPAddress [0].GetAddress (1), port, socketFactory, 2, 0, MakeCallback (&CwndChange));
   //InstallBulkSend (leftNodes.Get (0), routerToRightIPAddress [0].GetAddress (1), port, socketFactory);
-  InstallOnOffSend (nodes.Get (0), IPAddresses [2].GetAddress (1), port1, socketFactory, 
-                    "ns3::ConstantRandomVariable[Constant=1]", "ns3::ConstantRandomVariable[Constant=0]", 
-                    1024, "1Mbps");
-
-  globalOnoffTable->setGlobalNodes(nodes);
-
+  InstallUdpClient(nodes.Get (0), IPAddresses [2].GetAddress (1), port1, Seconds (0.05), 1024, 320);
+  //InstallOnOffSend (nodes.Get (0), IPAddresses [2].GetAddress (1), port1, socketFactory, 
+  //                  "ns3::ConstantRandomVariable[Constant=1]", "ns3::ConstantRandomVariable[Constant=0]", 
+  //                  1024, "1Mbps");
+  //InstallOnOffSend (nodes.Get (4), IPAddresses [2].GetAddress (1), port2, socketFactory, 
+  //                  "ns3::ConstantRandomVariable[Constant=1]", "ns3::ConstantRandomVariable[Constant=0]", 
+  //                  1024, "1Mbps");
 
   // Enable PCAP on all the point to point interfaces
   channelHelpers[0].EnablePcapAll (dir + "pcap/ns-3", true);
@@ -349,8 +373,7 @@ int main (int argc, char *argv[])
     uint32_t num = node -> GetNDevices();
     for (uint32_t k = 0; k + 1 != num; ++k) {
       Ptr<QueueDisc> queue= qd.Get(queue_num);
-      myfile << "Stat for Queue " << i << "-" << k << ":\n";
-      myfile << "Device MAC address: " << node->GetDevice(k)->GetAddress();
+      myfile << "Stat for Queue " << i << "-" << k << ":";
       myfile << qd.Get (queue_num)->GetStats ();
       queue_num ++;
     }  // Check queue size every 1/100 of a second
