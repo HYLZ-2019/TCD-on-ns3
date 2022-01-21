@@ -159,17 +159,17 @@ LosslessQueueDisc::DoDequeue (void)
     Ptr<GlobalRouter> gr = destNode->GetObject<GlobalRouter>();
     std::cout << "GlobalRouter: " << gr << std::endl;
     Ptr<Ipv4GlobalRouting> router = gr->GetRoutingProtocol();
-    // The program will crash here, because router will be NULL.
-    // I tried to new an Ipv4GlobalRouting to be router, but it will be empty and cannot route.
-    Ptr<Ipv4Route> route = router->RouteOutput(ipitem->GetPacket(), hd, dv, err);
+    // The "0" in RouteOutput's inputs is explained in the docs (https://www.nsnam.org/doxygen/classns3_1_1_ipv4_global_routing.html#a569e54ce6542c3b88305140cce134d15)
+    Ptr<Ipv4Route> route = router->RouteOutput(ipitem->GetPacket(), hd, 0, err);
     std::cout << "err: " << err << std::endl;
     std::cout << "route: " << route << std::endl;
     if (route == NULL){
       throw "route is NULL (Reason unknown)";
     }
-    std::cout << "Device address of found route: " << route->GetOutputDevice()->GetAddress() << "\n";
+    Address nextQueueMAC = route->GetOutputDevice()->GetAddress();
+    std::cout << "Device address of found route: " << nextQueueMAC << "\n";
     //std::cout << "Packet with GetAddress() == " << destMAC << std::endl;
-    bool destOff = ! onoffTable -> getValue(destMAC); 
+    bool destOff = ! onoffTable -> getValue(nextQueueMAC); 
     
     if (destOff) {
         //std::cout << "The destination is blocked.\n";
