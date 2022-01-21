@@ -99,6 +99,7 @@ UdpSocketDcqcn::UdpSocketDcqcn ()
   m_allowBroadcast = false;
   static uint32_t socketNum = 0;
   m_socketID = ++socketNum;
+  m_txMachineState = READY;
 }
 
 UdpSocketDcqcn::~UdpSocketDcqcn ()
@@ -728,8 +729,9 @@ UdpSocketDcqcn::TransmitStart(Ptr<Packet> p) {
 void
 UdpSocketDcqcn::DequeueAndTransmit(void) {
 	NS_LOG_FUNCTION(this);
+  std::cout << "DequeueAndTransmit\n";
 	if (m_txMachineState == BUSY) return;	// Quit if channel busy
-	
+
 	//没有要发的包了，return
 	if (m_sendingBuffer.empty()) return;
 	
@@ -971,6 +973,7 @@ UdpSocketDcqcn::DoSendTo (Ptr<Packet> p, Ipv4Address dest, uint16_t port, uint8_
 int
 UdpSocketDcqcn::DoSendTo (Ptr<Packet> p, Ipv4Address dest, uint16_t port)
 {
+  std::cout << "DoSendTo\n";
   NS_LOG_FUNCTION (this << p << dest << port);
   if (m_boundnetdevice)
     {
