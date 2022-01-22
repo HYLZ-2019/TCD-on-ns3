@@ -372,6 +372,8 @@ def build(bld):
         'model/ipv4-routing-protocol.h',
         'model/udp-socket.h',
         'model/udp-socket-factory.h',
+        'model/udp-socket-dcqcn.h',
+        'model/udp-socket-factory-dcqcn.h',
         'model/tcp-socket.h',
         'model/tcp-socket-factory.h',
         'model/ipv4.h',
