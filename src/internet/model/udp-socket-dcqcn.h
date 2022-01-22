@@ -255,6 +255,7 @@ private:
   double m_alpha[maxHop];
   double m_alpha_resume_interval;
   double m_g;
+  double m_qcn_interval;
   EventId  m_nextSend;		//< The next send event
 
   // Connections to other layers of TCP/IP
@@ -305,6 +306,7 @@ private:
 	uint16_t m_qfb;
 	uint16_t m_total;
   
+  
   void ResumeAlpha(uint32_t hop);
   void AdjustRates(uint32_t hop, DataRate increase);
   void rpr_adjust_rates(uint32_t hop);
@@ -320,6 +322,7 @@ private:
   void rpr_hyper_increase(uint32_t hop);
   void rpr_cnm_received(uint32_t hop, double fraction);
   void rpr_timer_wrapper(uint32_t hop);
+  void CheckandSendQCN(Ipv4Address source, uint32_t port);
 };
 
 class MyTag : public Tag

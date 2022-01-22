@@ -20,6 +20,7 @@
 
 #include "ns3/log.h"
 #include "ns3/node.h"
+#include "ns3/double.h"
 #include "ns3/inet-socket-address.h"
 #include "ns3/inet6-socket-address.h"
 #include "ns3/ipv4-route.h"
@@ -80,6 +81,10 @@ UdpSocketDcqcn::GetTypeId (void)
                 DataRateValue (DataRate ("1b/s")),
                 MakeDataRateAccessor (&UdpSocketDcqcn::m_bps),
                 MakeDataRateChecker ())
+    .AddAttribute("QCNInterval", "The interval of generating QCN",
+                DoubleValue(50.0),
+                MakeDoubleAccessor(&UdpSocketDcqcn::m_qcn_interval),
+                MakeDoubleChecker<double>())
   ;
   return tid;
 }
@@ -93,7 +98,10 @@ UdpSocketDcqcn::UdpSocketDcqcn ()
     m_shutdownSend (false),
     m_shutdownRecv (false),
     m_connected (false),
-    m_rxAvailable (0)
+    m_rxAvailable (0),
+    m_ecnbits (-1),
+	  m_qfb (0),
+	  m_total (0)
 {
   NS_LOG_FUNCTION (this);
   m_allowBroadcast = false;
@@ -1487,6 +1495,24 @@ UdpSocketDcqcn::BindToNetDevice (Ptr<NetDevice> netdevice)
   return;
 }
 
+void
+UdpSocketDcqcn::CheckandSendQCN(Ipv4Address source, uint32_t port) {
+  bool iscongested = (m_ecnbits == 3);
+  if (iscongested) {
+			//构造一个QCN包发出去, 发这个QCN包不受Traffic Control限制
+			Ptr<Packet> p; 
+			MyTag qcnTag;
+			qcnTag.SetSimpleValue (4);
+			p -> AddPacketTag(qcnTag);
+			//参数需要编
+			DoSendTo (p, source, port);
+			//DoSendTo就直接发包了 m_udp -> Send (p->Copy (), addri, dest, m_endPoint->GetLocalPort (), port);
+	}
+  m_ecnbits = 0;
+  m_qfb = m_total = 0;
+  Simulator::Schedule(MicroSeconds(m_qcn_interval), &UdpSocketDcqcn::CheckandSendQCN, this, source, port);
+}
+
 void 
 UdpSocketDcqcn::ForwardUp (Ptr<Packet> packet, Ipv4Header header, uint16_t port,
                           Ptr<Ipv4Interface> incomingInterface)
@@ -1551,23 +1577,21 @@ UdpSocketDcqcn::ForwardUp (Ptr<Packet> packet, Ipv4Header header, uint16_t port,
 		
 		//检查packet,如果有拥塞标记就往回发QCN,标记怎么打还没确定,要和TCLayer一致
 		//对应qddnetdevice里的CheckandSendQCN()
-		bool iscongested;
-		//TODO: 检查
-		iscongested = (simpleValue == 3);
+    
+    uint16_t ecnbits = (simpleValue & 3);
 		//认为1是non-con, 2是undetermined, 3是con
-		
-		if (iscongested) {
-			//构造一个QCN包发出去
-			//发这个QCN包不受Traffic Control限制
-			Ptr<Packet> p; 
-			MyTag qcnTag;
-			qcnTag.SetSimpleValue (4);
-			p -> AddPacketTag(qcnTag);
-			//参数需要编
+    if (m_ecnbits == -1) {
+      m_ecnbits = ecnbits;
+      m_qfb = (ecnbits != 0 ? 1 : 0);
+      m_total = 1;
 			Ipv4Address ipv4 = header.GetSource();
-			DoSendTo (p, ipv4, port);
-			//DoSendTo就直接发包了 m_udp -> Send (p->Copy (), addri, dest, m_endPoint->GetLocalPort (), port);
-		}
+      CheckandSendQCN(ipv4, port);
+    }
+		else {
+      m_ecnbits |= ecnbits;
+      m_qfb += (ecnbits != 0 ? 1 : 0);
+      m_total++;
+    }
 	}
 	else { //如果是QCN
       // This is a Congestion signal
