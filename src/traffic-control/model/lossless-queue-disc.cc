@@ -24,6 +24,7 @@
 #include "ns3/drop-tail-queue.h"
 #include "ns3/ipv4-global-routing.h"
 #include "ns3/ipv4-queue-disc-item.h"
+#include "ns3/udp-socket-dcqcn.h"
 
 
 namespace ns3 {

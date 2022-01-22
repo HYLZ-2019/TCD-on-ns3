@@ -19,6 +19,31 @@
  */
 
 #include "udp-socket-dcqcn.h"
+#include "udp-l4-protocol.h"
+#include "ipv4-end-point.h"
+#include "ipv6-end-point.h"
+#include <limits>
+#include "ns3/log.h"
+#include "ns3/node.h"
+#include "ns3/double.h"
+#include "ns3/inet-socket-address.h"
+#include "ns3/inet6-socket-address.h"
+#include "ns3/ipv4-route.h"
+#include "ns3/ipv6-route.h"
+#include "ns3/ipv4.h"
+#include "ns3/ipv6.h"
+#include "ns3/ipv6-l3-protocol.h"
+#include "ns3/ipv4-header.h"
+#include "ns3/ipv4-routing-protocol.h"
+#include "ns3/ipv6-routing-protocol.h"
+#include "ns3/udp-socket-factory.h"
+#include "ns3/trace-source-accessor.h"
+#include "ns3/ipv4-packet-info-tag.h"
+#include "ns3/ipv6-packet-info-tag.h"
+#include "ns3/error-model.h"
+#include "ns3/flow-id-tag.h"
+#include "ns3/udp-header.h"
+#include "ns3/simulator.h"
 
 #define RDMA_RECV
 

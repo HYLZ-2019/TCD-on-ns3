@@ -24,7 +24,6 @@
 #include "ns3/queue-disc.h"
 #include "lossless-onoff-table.h"
 #include "ns3/global-router-interface.h"
-#include "ns3/udp-socket-dcqcn.h"
 
 namespace ns3 {
 
