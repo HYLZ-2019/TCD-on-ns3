@@ -127,24 +127,22 @@ LosslessQueueDisc::DoDequeue (void)
     Ipv4QueueDiscItem* ipitem = (Ipv4QueueDiscItem*)itemptr;
     
     Ipv4Header hd = ipitem->GetHeader();
-    //std::cout << "Got Ipv4Header: " << hd << std::endl;
-    
+
     // Find the destination device.
     Address destMAC = item -> GetAddress();
     NodeContainer nc = this->onoffTable->getGlobalNodes();
     Ptr<NetDevice> dv; // The destination device.
     Ptr<Node> destNode; // The destination node.
     bool found = 0;
-    //std::cout << "destMAC: " << destMAC << std::endl;
+
     for (auto node = nc.Begin(); node!=nc.End(); node++){
       uint32_t num = (*node) -> GetNDevices();
       for (uint32_t k = 0; k + 1 != num; ++k) {
         dv = (*node)->GetDevice(k);
-        //std::cout << "dv->GetAddress: " << dv->GetAddress() << std::endl;
+
         if (dv->GetAddress() == destMAC){
           found = 1;
           destNode = *node;
-          //std::cout << "Found\n";
           break;
         }
       }
@@ -157,7 +155,6 @@ LosslessQueueDisc::DoDequeue (void)
     // Find where the packet will go in the next hop.
     Socket::SocketErrno err; // The returned error number.
     Ptr<GlobalRouter> gr = destNode->GetObject<GlobalRouter>();
-    //std::cout << "GlobalRouter: " << gr << std::endl;
     Ptr<Ipv4GlobalRouting> router = gr->GetRoutingProtocol();
     // The "0" in RouteOutput's inputs is explained in the docs (https://www.nsnam.org/doxygen/classns3_1_1_ipv4_global_routing.html#a569e54ce6542c3b88305140cce134d15)
     Ptr<Ipv4Route> route = router->RouteOutput(ipitem->GetPacket(), hd, 0, err);
@@ -190,23 +187,33 @@ LosslessQueueDisc::DoDequeue (void)
   Ptr<QueueDiscItem> realitem = GetInternalQueue (0)->Dequeue (); // not const
 
   if (GetCurrentSize() <= qlenLowerBound) {
-    //std::cout << "Device " << this << " tries to turn ON\n";
-    /*TODO: 找到这个node上所有的device, 标记ON*/
     std :: set <Address> :: iterator it = mda.begin();
     for (; it != mda.end(); ++it) 
       onoffTable -> setValue(*it, true); 
   }
 
-  if (blockedCnt > 0){
-      /**
-       * TODO: 给realitem打上TCD标记。
-       * 
-       */
-      blockedCnt--;
+  // Modify the TCD tag according to this queue's state.
+  MyTag tcdTag;
+  Ptr<Packet> pk = realitem->GetPacket();
+  bool havetag = pk->RemovePacketTag(tcdTag);
+  uint8_t tagval = 0;
+  if (havetag){
+    tagval |= tcdTag.GetSimpleValue();
   }
+  switch (getCurrentTCD()){
+    case TcdState::TCD_CONGESTION:
+      tagval |= TCD_CONGESTED_BIT;
+      break;
+    case TcdState::TCD_NONCONGESTION:
+      tagval |= TCD_NONCONGESTED_BIT;
+      break;
+    case TcdState::TCD_UNDETERMINED:
+      tagval |= TCD_UNDETERMINED_BIT;
+      break;
+  }
+  tcdTag.SetSimpleValue(tagval);
+  pk->AddPacketTag(tcdTag);
 
-  //std::cout << "Returning item: " << realitem << "\n";
-  //std::cout<< "realitem GetAddress(): " << realitem->GetAddress()<<std::endl;
   return realitem;
 }
 

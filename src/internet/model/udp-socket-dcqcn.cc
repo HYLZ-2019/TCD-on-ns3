@@ -1523,12 +1523,12 @@ UdpSocketDcqcn::BindToNetDevice (Ptr<NetDevice> netdevice)
 
 void
 UdpSocketDcqcn::CheckandSendQCN(Ipv4Address source, uint32_t port) {
-  bool iscongested = (m_ecnbits == 3);
+  bool iscongested = (m_ecnbits & (TCD_CONGESTED_BIT | TCD_UNDETERMINED_BIT));
   if (iscongested) {
 			//构造一个QCN包发出去, 发这个QCN包不受Traffic Control限制
 			Ptr<Packet> p; 
 			MyTag qcnTag;
-			qcnTag.SetSimpleValue (4);
+			qcnTag.SetSimpleValue (TCD_QCN_BIT | m_ecnbits);
 			p -> AddPacketTag(qcnTag);
 			//参数需要编
 			DoSendTo (p, source, port);
@@ -1592,7 +1592,7 @@ UdpSocketDcqcn::ForwardUp (Ptr<Packet> packet, Ipv4Header header, uint16_t port,
 	uint8_t simpleValue = myTag.GetSimpleValue();
 	
   std::cout << "#############with Tag ["<< (uint)simpleValue << "] on the packet.\n";
-	bool isQCN = ((simpleValue & 4) != 0);
+	bool isQCN = ((simpleValue & TCD_QCN_BIT) != 0);
 	if(!isQCN) { //如果是数据包
 		//收包
 		Address address = InetSocketAddress (header.GetSource (), port);
@@ -1606,8 +1606,8 @@ UdpSocketDcqcn::ForwardUp (Ptr<Packet> packet, Ipv4Header header, uint16_t port,
 		//检查packet,如果有拥塞标记就往回发QCN,标记怎么打还没确定,要和TCLayer一致
 		//对应qddnetdevice里的CheckandSendQCN()
     
-    uint16_t ecnbits = (simpleValue & 3);
-		//认为1是non-con, 2是undetermined, 3是con
+    uint16_t ecnbits = (simpleValue & TCD_ECN_MASK);
+		// The 3 bits represent whether a packet has gone through CONG/UNDET/NONCON queues.
     if (m_ecnbits == -1) {
       m_ecnbits = ecnbits;
       m_qfb = (ecnbits != 0 ? 1 : 0);
@@ -1835,7 +1835,7 @@ MyTag::Deserialize (TagBuffer i)
 void 
 MyTag::Print (std::ostream &os) const
 {
-  os << "v=" << (uint32_t)m_simpleValue;
+  os << "v=" << (uint32_t)m_simpleValue << "[TCD_CONGESTED="<<!!(m_simpleValue & TCD_CONGESTED_BIT) << ", TCD_UNDETERMINED="<<!!(m_simpleValue & TCD_UNDETERMINED_BIT)<<", TCD_NONCONGESTED="<<!!(m_simpleValue & TCD_NONCONGESTED_BIT)<<"]";
 }
 void 
 MyTag::SetSimpleValue (uint8_t value)

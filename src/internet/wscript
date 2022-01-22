@@ -235,7 +235,8 @@ def build(bld):
         'model/rip.cc',
         'model/rip-header.cc',
         'helper/rip-helper.cc',
-        'model/tcp-lossless-tcd.cc'
+        'model/tcp-lossless-tcd.cc',
+        'model/udp-socket-dcqcn.cc'
         ]
 
     internet_test = bld.create_ns3_module_test_library('internet')
@@ -446,7 +447,8 @@ def build(bld):
         'model/rip.h',
         'model/rip-header.h',
         'helper/rip-helper.h',
-        'model/tcp-lossless-tcd.h'
+        'model/tcp-lossless-tcd.h',
+        'model/udp-socket-dcqcn.h'
        ]
 
     if bld.env['NSC_ENABLED']:
