@@ -110,7 +110,7 @@ UdpSocketDcqcn::UdpSocketDcqcn ()
 
   //DCQCN Init
   m_txMachineState = READY;
-  m_credits = 0;
+  //m_credits = 0;
   for (uint32_t j = 0; j < maxHop; j++)
     {
       m_txBytes[j] = m_bc;				//we don't need this at the beginning, so it doesn't matter what value it has
@@ -520,7 +520,7 @@ UdpSocketDcqcn::DoSend (Ptr<Packet> p) /*TODO 替换成DCQCN的版本*/
 //你会从m_sedingBuffer里取出需要的p, dest, port, tos，然后调用DoSendTo
 void
 UdpSocketDcqcn::TransmitComplete(void) {
-  std::cout <<"At Time <" << Simulator::Now ().GetSeconds () << ">, TransmitComplete.\n";
+  //std::cout <<"At Time <" << Simulator::Now ().GetSeconds () << ">, TransmitComplete.\n";
 	NS_LOG_FUNCTION(this);
 	NS_ASSERT_MSG(m_txMachineState == BUSY, "Must be BUSY if transmitting");
 	m_txMachineState = READY;
@@ -531,7 +531,7 @@ UdpSocketDcqcn::TransmitComplete(void) {
 
 void 
 UdpSocketDcqcn::TransmitStart(Ptr<Packet> p) {
-  std::cout <<"At Time <" << Simulator::Now ().GetSeconds () << ">, TransmitStart.\n";
+  //std::cout <<"At Time <" << Simulator::Now ().GetSeconds () << ">, TransmitStart.\n";
 	NS_LOG_FUNCTION(this << p);
 	NS_LOG_LOGIC("UID is " << p->GetUid() << ")");
 	//
@@ -751,7 +751,7 @@ void
 UdpSocketDcqcn::DequeueAndTransmit(void) {
 	NS_LOG_FUNCTION(this);
 
-  std::cout <<"At Time <" << Simulator::Now ().GetSeconds () << ">, DequeueAndTransmit.\n";
+  //std::cout <<"At Time <" << Simulator::Now ().GetSeconds () << ">, DequeueAndTransmit.\n";
 	if (m_txMachineState == BUSY) return;	// Quit if channel busy
 
 	//没有要发的包了，return
@@ -766,12 +766,12 @@ UdpSocketDcqcn::DequeueAndTransmit(void) {
 				m_rateAll[j] = m_bps, m_targetRate[j] = m_bps;
 			}
 		}
-    std::cout << "m_bps:"<<m_bps<<"\n";
-		double creditsDue = std::max(0.0, (double)m_bps.GetBitRate() / m_rate.GetBitRate() * (item.p->GetSize() - m_credits));
-		Time nextSend = m_tInterframeGap + m_bps.CalculateBytesTxTime(creditsDue);
+    //std::cout << "m_bps:"<<m_bps<<"\n";
+		//double creditsDue = std::max(0.0, (double)m_bps.GetBitRate() / m_rate.GetBitRate() * (item.p->GetSize() - m_credits));
+		Time nextSend = m_tInterframeGap + m_rate.CalculateBytesTxTime(item.p->GetSize());
 		m_nextAvail = Simulator::Now() + nextSend;
 
-		m_credits = 0;	//reset credits
+		//m_credits = 0;	//reset credits
 		for (uint32_t i = 0; i < 1; i++)
 		{
 			if (m_rpStage[i] > 0) m_txBytes[i] -= item.p->GetSize();
@@ -790,7 +790,7 @@ UdpSocketDcqcn::DequeueAndTransmit(void) {
 		}
 		TransmitStart(item.p);
 
-    std::cout <<"At Time <" << Simulator::Now ().GetSeconds () << ">, Call DoSendTo(), m_nextAvail="<< m_nextAvail.GetSeconds()<<".\n";
+    //std::cout <<"At Time <" << Simulator::Now ().GetSeconds () << ">, Call DoSendTo(), m_nextAvail="<< m_nextAvail.GetSeconds()<<".\n";
 		DoSendTo(item.p, item.dest, item.port, item.tos);
 		return;
 	}
@@ -820,7 +820,8 @@ int UdpSocketDcqcn::wrapDoSendTo(Ptr<Packet> p, Ipv4Address dest, uint16_t port,
 int
 UdpSocketDcqcn::DoSendTo (Ptr<Packet> p, Ipv4Address dest, uint16_t port, uint8_t tos)
 {
-  std::cout << "DoSendTo Ipv4 with tos\n";
+  static int num = 0; ++num;
+  std::cout << "*************the [" << num <<"]th of ipv4DoSendTo() with tos is called\n";
   std::cout <<"At Time <" << Simulator::Now ().GetSeconds () << ">, DoSendTo: packet=[" << p << "], dest=[" << dest << "], port=[" << port << "].\n";
  
   NS_LOG_FUNCTION (this << p << dest << port << (uint16_t) tos);
@@ -1539,10 +1540,11 @@ void
 UdpSocketDcqcn::ForwardUp (Ptr<Packet> packet, Ipv4Header header, uint16_t port,
                           Ptr<Ipv4Interface> incomingInterface)
 {
+	static int num = 0; ++num;
+  std::cout << "#############The ["<< num << "]th of ForwardUp.\n";
 	NS_LOG_FUNCTION (this << packet << header << port);
   std::cout <<"At Time <" << Simulator::Now ().GetSeconds () << ">, socketID="<< m_socketID<<", DCQCN::ForwardUp() is called.\n";
   std::cout << "ForwardUp header=[" << header << "], port=[" << port << "].\n";
-	
 	if (m_shutdownRecv) {
 		return;
 	}
@@ -1586,6 +1588,7 @@ UdpSocketDcqcn::ForwardUp (Ptr<Packet> packet, Ipv4Header header, uint16_t port,
 	packet -> RemovePacketTag(myTag);
 	uint8_t simpleValue = myTag.GetSimpleValue();
 	
+  std::cout << "#############with Tag ["<< (uint)simpleValue << "] on the packet.\n";
 	bool isQCN = ((simpleValue & 4) != 0);
 	if(!isQCN) { //如果是数据包
 		//收包

@@ -182,8 +182,8 @@ LosslessQueueDisc::DoDequeue (void)
     }
   }
   catch (const char* msg){
-    std::cout << "Caught an exception!\n";
-    std::cout << msg << "\n";
+    //std::cout << "Caught an exception!\n";
+    //std::cout << msg << "\n";
   }
   reportOutputClear();
 

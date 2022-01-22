@@ -319,6 +319,8 @@ TrafficControlLayer::Receive (Ptr<NetDevice> device, Ptr<const Packet> p,
                               uint16_t protocol, const Address &from, const Address &to,
                               NetDevice::PacketType packetType)
 {
+  std::cout <<"At Time <" << Simulator::Now ().GetSeconds () << ">, Device "<< device <<", TrafficControlLayer::Receive() is called. ";
+  std::cout << "packet=[" << p << "]\n";
   NS_LOG_FUNCTION (this << device << p << protocol << from << to << packetType);
 
   bool found = false;
@@ -348,6 +350,8 @@ TrafficControlLayer::Receive (Ptr<NetDevice> device, Ptr<const Packet> p,
 void
 TrafficControlLayer::Send (Ptr<NetDevice> device, Ptr<QueueDiscItem> item)
 {
+  std::cout <<"At Time <" << Simulator::Now ().GetSeconds () << ">, Device " << device << ", TrafficControlLayer::Send() is called.";
+  std::cout << "item=[" << item << "]\n";
   NS_LOG_FUNCTION (this << device << item);
 
   NS_LOG_DEBUG ("Send packet to device " << device << " protocol number " <<

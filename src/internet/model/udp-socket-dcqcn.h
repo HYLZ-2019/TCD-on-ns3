@@ -300,7 +300,7 @@ private:
   uint32_t m_rpTimeStage[maxHop];
   uint32_t m_rpStage[maxHop]; //1: fr; 2: ai; 3: hi
   Time     m_nextAvail;	//< Soonest time of next send
-  double   m_credits;	//< Credits accumulated
+  //double   m_credits;	//< Credits accumulated
   EventId m_rateIncrease; // rate increase event (QCN)
   uint8_t m_ecnbits;
 	uint16_t m_qfb;

@@ -50,7 +50,7 @@
 
 using namespace ns3;
 std::string dir = "results/";
-Time stopTime = Seconds (60);
+Time stopTime = Seconds (20);
 uint32_t segmentSize = 524;
 
 
@@ -350,7 +350,7 @@ int main (int argc, char *argv[])
   // Install BulkSend application
   //InstallBulkSend (leftNodes.Get (0), routerToRightIPAddress [0].GetAddress (1), port, socketFactory, 2, 0, MakeCallback (&CwndChange));
   //InstallBulkSend (leftNodes.Get (0), routerToRightIPAddress [0].GetAddress (1), port, socketFactory);
-  InstallUdpClient(nodes.Get (0), IPAddresses [2].GetAddress (1), port1, Seconds (1.0), 1024, 320);
+  InstallUdpClient(nodes.Get (0), IPAddresses [2].GetAddress (1), port1, Seconds (0.50), 1024, 320);
   //InstallUdpClient(nodes.Get (4), IPAddresses [2].GetAddress (1), port1, Seconds (0.05), 1024, 320);
   //InstallOnOffSend (nodes.Get (0), IPAddresses [2].GetAddress (1), port1, socketFactory, 
   //                  "ns3::ConstantRandomVariable[Constant=1]", "ns3::ConstantRandomVariable[Constant=0]", 
