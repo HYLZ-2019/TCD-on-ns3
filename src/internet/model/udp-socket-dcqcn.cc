@@ -472,6 +472,9 @@ UdpSocketDcqcn::Send (Ptr<Packet> p, uint32_t flags) /*TODO 替换成DCQCN的版
       return -1;
     }
 
+    MyTag qcnTag;
+    qcnTag.SetSimpleValue (0);
+    p -> AddPacketTag(qcnTag);
   return DoSend (p);
 }
 
