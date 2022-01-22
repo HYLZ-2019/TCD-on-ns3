@@ -78,7 +78,7 @@ UdpSocketDcqcn::GetTypeId (void)
                    MakeCallbackAccessor (&UdpSocketDcqcn::m_icmpCallback6),
                    MakeCallbackChecker ())
     .AddAttribute ("bps", "Default DataRate of the Socket",
-                DataRateValue (DataRate ("1b/s")),
+                DataRateValue (DataRate ("1Mb/s")),
                 MakeDataRateAccessor (&UdpSocketDcqcn::m_bps),
                 MakeDataRateChecker ())
     .AddAttribute("QCNInterval", "The interval of generating QCN",
@@ -107,7 +107,19 @@ UdpSocketDcqcn::UdpSocketDcqcn ()
   m_allowBroadcast = false;
   static uint32_t socketNum = 0;
   m_socketID = ++socketNum;
+
+  //DCQCN Init
   m_txMachineState = READY;
+  m_credits = 0;
+  for (uint32_t j = 0; j < maxHop; j++)
+    {
+      m_txBytes[j] = m_bc;				//we don't need this at the beginning, so it doesn't matter what value it has
+      m_rpWhile[j] = m_rpgTimeReset;	//we don't need this at the beginning, so it doesn't matter what value it has
+      m_rpByteStage[j] = 0;
+      m_rpTimeStage[j] = 0;
+      m_alpha[j] = 0.5;
+      m_rpStage[j] = 0; //not in any qcn stage
+    }
 }
 
 UdpSocketDcqcn::~UdpSocketDcqcn ()
@@ -467,7 +479,6 @@ int
 UdpSocketDcqcn::DoSend (Ptr<Packet> p) /*TODO 替换成DCQCN的版本*/
 {
   NS_LOG_FUNCTION (this << p);
-  //std::cout << "DoSend " << p << "\n";
   if ((m_endPoint == 0) && (Ipv4Address::IsMatchingType(m_defaultAddress) == true))
     {
       if (Bind () == -1)
@@ -509,6 +520,7 @@ UdpSocketDcqcn::DoSend (Ptr<Packet> p) /*TODO 替换成DCQCN的版本*/
 //你会从m_sedingBuffer里取出需要的p, dest, port, tos，然后调用DoSendTo
 void
 UdpSocketDcqcn::TransmitComplete(void) {
+  std::cout <<"At Time <" << Simulator::Now ().GetSeconds () << ">, TransmitComplete.\n";
 	NS_LOG_FUNCTION(this);
 	NS_ASSERT_MSG(m_txMachineState == BUSY, "Must be BUSY if transmitting");
 	m_txMachineState = READY;
@@ -519,6 +531,7 @@ UdpSocketDcqcn::TransmitComplete(void) {
 
 void 
 UdpSocketDcqcn::TransmitStart(Ptr<Packet> p) {
+  std::cout <<"At Time <" << Simulator::Now ().GetSeconds () << ">, TransmitStart.\n";
 	NS_LOG_FUNCTION(this << p);
 	NS_LOG_LOGIC("UID is " << p->GetUid() << ")");
 	//
@@ -737,7 +750,8 @@ UdpSocketDcqcn::TransmitStart(Ptr<Packet> p) {
 void
 UdpSocketDcqcn::DequeueAndTransmit(void) {
 	NS_LOG_FUNCTION(this);
-  std::cout << "DequeueAndTransmit\n";
+
+  std::cout <<"At Time <" << Simulator::Now ().GetSeconds () << ">, DequeueAndTransmit.\n";
 	if (m_txMachineState == BUSY) return;	// Quit if channel busy
 
 	//没有要发的包了，return
@@ -752,6 +766,7 @@ UdpSocketDcqcn::DequeueAndTransmit(void) {
 				m_rateAll[j] = m_bps, m_targetRate[j] = m_bps;
 			}
 		}
+    std::cout << "m_bps:"<<m_bps<<"\n";
 		double creditsDue = std::max(0.0, (double)m_bps.GetBitRate() / m_rate.GetBitRate() * (item.p->GetSize() - m_credits));
 		Time nextSend = m_tInterframeGap + m_bps.CalculateBytesTxTime(creditsDue);
 		m_nextAvail = Simulator::Now() + nextSend;
@@ -774,6 +789,8 @@ UdpSocketDcqcn::DequeueAndTransmit(void) {
 			}
 		}
 		TransmitStart(item.p);
+
+    std::cout <<"At Time <" << Simulator::Now ().GetSeconds () << ">, Call DoSendTo(), m_nextAvail="<< m_nextAvail.GetSeconds()<<".\n";
 		DoSendTo(item.p, item.dest, item.port, item.tos);
 		return;
 	}
@@ -793,7 +810,7 @@ UdpSocketDcqcn::DequeueAndTransmit(void) {
 
 int UdpSocketDcqcn::wrapDoSendTo(Ptr<Packet> p, Ipv4Address dest, uint16_t port, uint8_t tos) {
 
-  std::cout << "wrapDoSendTo: packet=[" << p << "], dest=[" << dest << "], port=[" << port << "].\n";
+  std::cout <<"At Time <" << Simulator::Now ().GetSeconds () << ">, wrapDoSendTo: packet=[" << p << "], dest=[" << dest << "], port=[" << port << "].\n";
 	m_sendingBuffer.push(BufferItem(p, dest, port, tos)); //TODO:定义一下类型
 	
 	DequeueAndTransmit();
@@ -803,6 +820,9 @@ int UdpSocketDcqcn::wrapDoSendTo(Ptr<Packet> p, Ipv4Address dest, uint16_t port,
 int
 UdpSocketDcqcn::DoSendTo (Ptr<Packet> p, Ipv4Address dest, uint16_t port, uint8_t tos)
 {
+  std::cout << "DoSendTo Ipv4 with tos\n";
+  std::cout <<"At Time <" << Simulator::Now ().GetSeconds () << ">, DoSendTo: packet=[" << p << "], dest=[" << dest << "], port=[" << port << "].\n";
+ 
   NS_LOG_FUNCTION (this << p << dest << port << (uint16_t) tos);
   if (m_boundnetdevice)
     {
@@ -978,10 +998,12 @@ UdpSocketDcqcn::DoSendTo (Ptr<Packet> p, Ipv4Address dest, uint16_t port, uint8_
   return 0;
 }
 
+
 int
 UdpSocketDcqcn::DoSendTo (Ptr<Packet> p, Ipv4Address dest, uint16_t port)
 {
-  std::cout << "DoSendTo\n";
+  std::cout << "DoSendTo Ipv4 without tos\n";
+  std::cout <<"At Time <" << Simulator::Now ().GetSeconds () << ">, DoSendTo: packet=[" << p << "], dest=[" << dest << "], port=[" << port << "].\n";
   NS_LOG_FUNCTION (this << p << dest << port);
   if (m_boundnetdevice)
     {
@@ -1165,8 +1187,8 @@ UdpSocketDcqcn::DoSendTo (Ptr<Packet> p, Ipv4Address dest, uint16_t port)
 int
 UdpSocketDcqcn::DoSendTo (Ptr<Packet> p, Ipv6Address dest, uint16_t port) 
 {
+  std::cout << "DoSendTo Ipv6 without tos\n";
   NS_LOG_FUNCTION (this << p << dest << port);
-
   if (dest.IsIpv4MappedAddress ())
     {
         return (DoSendTo(p, dest.GetIpv4MappedAddress (), port, 0));
@@ -1518,12 +1540,12 @@ UdpSocketDcqcn::ForwardUp (Ptr<Packet> packet, Ipv4Header header, uint16_t port,
                           Ptr<Ipv4Interface> incomingInterface)
 {
 	NS_LOG_FUNCTION (this << packet << header << port);
-  std::cout << "socketID="<< m_socketID<<", DCQCN::ForwardUp() is called.\n";
+  std::cout <<"At Time <" << Simulator::Now ().GetSeconds () << ">, socketID="<< m_socketID<<", DCQCN::ForwardUp() is called.\n";
+  std::cout << "ForwardUp header=[" << header << "], port=[" << port << "].\n";
+	
 	if (m_shutdownRecv) {
 		return;
 	}
-  std::cout << "ForwardUp header=[" << header << "], port=[" << port << "].\n";
-	
 	  // Should check via getsockopt ()..
 	if (IsRecvPktInfo ())
 	{
@@ -1624,146 +1646,8 @@ void
 UdpSocketDcqcn::ForwardUp6 (Ptr<Packet> packet, Ipv6Header header, uint16_t port, Ptr<Ipv6Interface> incomingInterface)
 {
   NS_LOG_FUNCTION (this << packet << header.GetSource () << port);
-  std::cout << "ForwardUp6() is called\n";
-#ifdef RDMA_RECV
-
-  // 由于rdma并不区分ipv4和ipv6，所以ForwardUp6基本和ForwardUp4一致
-
-  // 跳过判断坏包部分
-  // if(m_receiveErrorModel && m_receiveErrorModel->IsCorrupt(packet)) {
-
-  // }
-  
-  // 这里它原来是利用RemoveHeader获取的header，但是我们这里已经有header了，就用给的🤔
-  // 问题是，IPv6Header没有protocol……
-  uint8_t protocol = 0;
-  // uint8_t protocol = header.GetProtocol ();
-  if((protocol != 0xFF && protocol != 0xFD && protocol != 0xFC) 
-  // || m_node->GetNodeType() > 0
-  ) {
-    // This is not QCN feedback, not NACK, or I am a switch I don't care
-    if(protocol != 0xFE) {  // not PFC
-      // packet->AddPacketTag(FlowIdTag(m_ifIndex));
-      // if(m_node->GetNodeType() == 0) {  // NIC
-        // we donot have getNodeType()! so I suppose we are NIC
-        if(protocol == 17) {  // look at udp only
-          //! 这个其实是有的，但是unused，所以注释了，不然编译不了
-          // uint16_t ecnbits = header.GetEcn();
-          UdpHeader udph;
-          packet->RemoveHeader (udph);
-          // SeqTsHeader sth; // we don't have SeqTsHeader
-          // p->PeekHeader (sth);
-          packet->AddHeader (udph);
-
-          bool found = false;
-          // uint32_t i, key = 0;
-
-          // 我们没有m_ecn_source，摆了
-          // for(i=0; i<m_ecn_source->size(); ++i) {
-            // ...
-          // }
-
-          if(!found) {
-            // 同上，什么都做不了
-            // ...
-          }
-
-          // 下面的还是需要SeqTsHeader的，我麻了
-          // ...
-        }
-
-      // 这个自然也没有😇，不过其实下面的分支好像经常用到，这个应该才是实际的发送？
-      // PointToPointReceive(packet);
-      } else {  // If this is a Pause, stop the corresponding queue
-        // 不做PFC
-        NS_ASSERT("我们不做PFC" == nullptr);
-      }
-    } else if(protocol == 0xFF) { // QCN on NIC
-      // This is a Congestion signal
-      // Then, extract data from the congestion packet.
-      // We assume, without verify, the packet is destinated to me
-      
-      // 这里实际上是要用CnHeader的，但我们没有，就只能先这样了
-      Ipv6Header ipv6h;
-      packet->Copy()->RemoveHeader(ipv6h);
-      // uint32_t qIndex = 
-      // if(qIndex==1) return;  // DCTCP
-      // uint32_t udpport = ipv4h.GetFlow();
-      // uint16_t ecnbits = ipv4h.GetECNBits();
-      // ... 这里一大段都是要CnHeader的，改不动
-      // 涉及到m_queue, m_rate, m_rateALL, m_targetRate等
-
-    } else if(protocol == 0xFD) { // NACK on NIC
-      // qbbHeader qbbh;
-      // packet->Copy()->RemoveHeader(qbbh);
-      // ... 这里一大段都是要qbbHeader的，改不动
-      // 涉及到m_queue, m_findex_udpport_map, m_seddingBuffer
-      // , m_chunk, m_waitAck, m_waitingAck, m_nextAvail, m_retransmit
-      //todo 这里涉及到了m_nextAvail，应该是个重点
-    } else if(protocol == 0xFC) { // ACK on NIC
-      // qbbHeader qbbh;
-      // p->Copy()->RemoveHeader(qbbh);
-      // ... 没qbbHeader改不动
-      // 涉及到m_queue, m_findex_udpport_map, m_sendingBuffer, m_nextAvail
-      // , m_ack_interval, m_backto0, m_chunk, m_waitAck, m_miletone_tx
-      //todo 这里涉及到了m_nextAvail，应该是个重点
-    }
-
-#else
-  if (m_shutdownRecv)
-    {
-      return;
-    }
-
-  // Should check via getsockopt ().
-  if (IsRecvPktInfo ())
-    {
-      Ipv6PacketInfoTag tag;
-      packet->RemovePacketTag (tag);
-      tag.SetAddress (header.GetDestination ());
-      tag.SetHoplimit (header.GetHopLimit ());
-      tag.SetTrafficClass (header.GetTrafficClass ());
-      tag.SetRecvIf (incomingInterface->GetDevice ()->GetIfIndex ());
-      packet->AddPacketTag (tag);
-    }
-
-  // Check only version 6 options
-  if (IsIpv6RecvTclass ())
-    {
-      SocketIpv6TclassTag ipTclassTag;
-      ipTclassTag.SetTclass (header.GetTrafficClass ());
-      packet->AddPacketTag (ipTclassTag);
-    }
-
-  if (IsIpv6RecvHopLimit ())
-    {
-      SocketIpv6HopLimitTag ipHopLimitTag;
-      ipHopLimitTag.SetHopLimit (header.GetHopLimit ());
-      packet->AddPacketTag (ipHopLimitTag);
-    }
-
-  // in case the packet still has a priority tag attached, remove it
-  SocketPriorityTag priorityTag;
-  packet->RemovePacketTag (priorityTag);
-
-  if ((m_rxAvailable + packet->GetSize ()) <= m_rcvBufSize)
-    {
-      Address address = Inet6SocketAddress (header.GetSource (), port);
-      m_deliveryQueue.push (std::make_pair (packet, address));
-      m_rxAvailable += packet->GetSize ();
-      NotifyDataRecv ();
-    }
-  else
-    {
-      // In general, this case should not occur unless the
-      // receiving application reads data from this socket slowly
-      // in comparison to the arrival rate
-      //
-      // drop and trace packet
-      NS_LOG_WARN ("No receive buffer space available.  Drop.");
-      m_dropTrace (packet);
-    }
-#endif
+  std::cout << "[Error]: ForwardUp6() is called\n";
+  return;
 }
 
 void
