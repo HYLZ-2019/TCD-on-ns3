@@ -207,7 +207,7 @@ LosslessQueueDisc::DoDequeue (void)
   m_packets_transmitted++;
 
   TcdState curTCD = getCurrentTCD();
-  std::cout << "TCL: current state is " << curTCD << ", length of the queue is " << GetCurrentSize() << std::endl;
+  std::cout << "LosslessQueueDisc "<<this<<": current state is " << tcdStateName(curTCD) << ", length of the queue is " << GetCurrentSize() << std::endl;
 
   switch (curTCD){
     case TcdState::TCD_CONGESTION:
@@ -358,6 +358,18 @@ void LosslessQueueDisc::updateQlenDecrease(){
 
 int LosslessQueueDisc::getPacketsTransmitted(){
   return m_packets_transmitted;
+}
+
+std::string LosslessQueueDisc::tcdStateName(int tcd){
+  switch(tcd){
+    case TcdState::TCD_CONGESTION:
+      return "TCD_CONGESTION";
+    case TcdState::TCD_NONCONGESTION:
+      return "TCD_NONCONGESTION";
+    case TcdState::TCD_UNDETERMINED:
+      return "TCD_UNDETERMINED";
+  }
+  return "What the hell??";
 }
 
 } // namespace ns3

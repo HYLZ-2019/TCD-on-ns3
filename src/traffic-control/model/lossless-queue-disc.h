@@ -24,6 +24,7 @@
 #include "ns3/queue-disc.h"
 #include "lossless-onoff-table.h"
 #include "ns3/global-router-interface.h"
+#include <string>
 
 namespace ns3 {
 
@@ -96,6 +97,8 @@ public:
 
   // Get total count of packets transmitted out.
   int getPacketsTransmitted();
+
+  std::string tcdStateName(int tcd);
 
 private:
   virtual bool DoEnqueue (Ptr<QueueDiscItem> item);
