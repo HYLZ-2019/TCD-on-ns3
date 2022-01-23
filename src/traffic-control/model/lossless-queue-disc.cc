@@ -57,6 +57,7 @@ LosslessQueueDisc::LosslessQueueDisc ()
   m_qState = TcdQueueState::TCD_CLEAR;
   m_start_clear_time = Simulator::Now();
   m_last_qsize = QueueSize("0p");
+  m_packets_transmitted = 0;
   sem_init(&m_qlen_decrease_mutex, 0, 1);
   updateQlenDecrease();
 }
@@ -70,6 +71,7 @@ LosslessQueueDisc::LosslessQueueDisc (LosslessOnoffTable* _onofftable)
   m_qState = TcdQueueState::TCD_CLEAR;
   m_start_clear_time = Simulator::Now();
   m_last_qsize = QueueSize("0p");
+  m_packets_transmitted = 0;
   sem_init(&m_qlen_decrease_mutex, 0, 1);
   updateQlenDecrease();
 }
@@ -201,6 +203,8 @@ LosslessQueueDisc::DoDequeue (void)
   if (havetag){
     tagval |= tcdTag.GetSimpleValue();
   }
+
+  m_packets_transmitted++;
 
   TcdState curTCD = getCurrentTCD();
   std::cout << "TCL: current state is " << curTCD << ", length of the queue is " << GetCurrentSize() << std::endl;
@@ -350,6 +354,10 @@ void LosslessQueueDisc::updateQlenDecrease(){
   sem_post(&m_qlen_decrease_mutex);
   // Do this after each qsize_decrease_update_interval.
   Simulator::Schedule(qsize_decrease_update_interval, &LosslessQueueDisc::updateQlenDecrease, this);
+}
+
+int LosslessQueueDisc::getPacketsTransmitted(){
+  return m_packets_transmitted;
 }
 
 } // namespace ns3

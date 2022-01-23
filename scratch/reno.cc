@@ -181,16 +181,19 @@ CheckQueueSize (Ptr<QueueDisc> queue)
       Ptr<NetDevice> dev = node -> GetDevice (k);
       // Output queue statics for every queue (~every device)
       queue = qd.Get(queue_num);
+      QueueDisc* qptr = &(*queue);
+      LosslessQueueDisc* lqueue = (LosslessQueueDisc*) qptr;
       uint32_t qSize = queue->GetCurrentSize ().GetValue ();
       std::ofstream fPlotQueue (std::stringstream (dir + "queue-" + std::to_string(i) + "-" + std::to_string(k) + ".dat").str ().c_str (), std::ios::out | std::ios::app);
       fPlotQueue << Simulator::Now ().GetSeconds () << " " << qSize <<" ";
       bool on = queue->onoffTable->getValue(dev->GetAddress());
       if (on){
-        fPlotQueue << "[ON]\n";
+        fPlotQueue << "[ON] ";
       }
       else{
-        fPlotQueue << "[OFF]\n";
+        fPlotQueue << "[OFF] ";
       }
+      fPlotQueue << "Transmitted: " << lqueue->getPacketsTransmitted() << "\n";
       fPlotQueue.close ();
       queue_num ++;
     }  // Check queue size every 1/100 of a second

@@ -94,6 +94,9 @@ public:
 
   void updateQlenDecrease();
 
+  // Get total count of packets transmitted out.
+  int getPacketsTransmitted();
+
 private:
   virtual bool DoEnqueue (Ptr<QueueDiscItem> item);
   virtual Ptr<QueueDiscItem> DoDequeue (void);
@@ -108,6 +111,7 @@ private:
   sem_t m_qlen_decrease_mutex;
   // Whether the queue length has been decreasing.
   bool m_qlen_decrease;
+  int m_packets_transmitted;
 };
 
 } // namespace ns3
