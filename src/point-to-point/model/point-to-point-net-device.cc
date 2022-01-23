@@ -225,23 +225,11 @@ PointToPointNetDevice::SetDataRate (DataRate bps)
   m_bps = bps;
 }
 
-DataRate
-PointToPointNetDevice::GetDataRate ()
-{
-  return m_bps;
-}
-
 void
 PointToPointNetDevice::SetInterframeGap (Time t)
 {
   NS_LOG_FUNCTION (this << t.As (Time::S));
   m_tInterframeGap = t;
-}
-
-Time
-PointToPointNetDevice::GetInterframeGap ()
-{
-  return m_tInterframeGap;
 }
 
 bool

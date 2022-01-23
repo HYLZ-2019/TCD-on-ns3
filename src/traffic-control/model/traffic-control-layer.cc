@@ -200,7 +200,6 @@ TrafficControlLayer::ScanDevices (void)
               q->SetNetDeviceQueueInterface (ndqi);
               q->SetSendCallback ([dev] (Ptr<QueueDiscItem> item)
                                   { dev->Send (item->GetPacket (), item->GetAddress (), item->GetProtocol ()); });
-              q->SetSendRate (dev-> GetDataRate(), dev -> GetInterframeGap());
             }
         }
     }
@@ -320,9 +319,8 @@ TrafficControlLayer::Receive (Ptr<NetDevice> device, Ptr<const Packet> p,
                               uint16_t protocol, const Address &from, const Address &to,
                               NetDevice::PacketType packetType)
 {
-  static int num = 0; ++num;
-  std::cout <<"At Time <" << Simulator::Now ().GetSeconds () << ">, the {" << num << "}th of TCL_Receive: packet=[" << p << "], from=[" << from << "], to=[" << to << "] at Device "<< device << "\n";
- 
+  std::cout <<"At Time <" << Simulator::Now ().GetSeconds () << ">, Device "<< device <<", TrafficControlLayer::Receive() is called. ";
+  std::cout << "packet=[" << p << "]\n";
   NS_LOG_FUNCTION (this << device << p << protocol << from << to << packetType);
 
   bool found = false;
@@ -352,9 +350,8 @@ TrafficControlLayer::Receive (Ptr<NetDevice> device, Ptr<const Packet> p,
 void
 TrafficControlLayer::Send (Ptr<NetDevice> device, Ptr<QueueDiscItem> item)
 {
-  static int num = 0; ++num;
-  std::cout <<"At Time <" << Simulator::Now ().GetSeconds () << ">, the {" << num << "}th of TCL_Send: packet=[" << item -> GetPacket() << "] at Device "<< device << "\n";
- 
+  std::cout <<"At Time <" << Simulator::Now ().GetSeconds () << ">, Device " << device << ", TrafficControlLayer::Send() is called.";
+  std::cout << "item=[" << item << "]\n";
   NS_LOG_FUNCTION (this << device << item);
 
   NS_LOG_DEBUG ("Send packet to device " << device << " protocol number " <<
