@@ -50,82 +50,21 @@
 
 using namespace ns3;
 std::string dir = "results/";
-Time stopTime = Seconds (100);
+
+Time stopTime = Seconds (120);
+
 uint32_t segmentSize = 524;
 
 
-
-
-//这东西是一个跟踪输出cwnd变化的，现在不要tcp就也不要cwnd
-// Function to trace change in cwnd at n0
-/*
-static void
-CwndChange (uint32_t oldCwnd, uint32_t newCwnd)
-{
-  std::ofstream fPlotQueue (dir + "cwndTraces/n0.dat", std::ios::out | std::ios::app);
-  fPlotQueue << Simulator::Now ().GetSeconds () << " " << newCwnd / segmentSize << std::endl;
-  fPlotQueue.close ();
-}*/
-
 // Function to calculate drops in a particular Queue
+// Shouldn't be called in our case, delete it later
 static void
 DropAtQueue (Ptr<OutputStreamWrapper> stream, Ptr<const QueueDiscItem> item)
 {
   *stream->GetStream () << Simulator::Now ().GetSeconds () << " 1" << std::endl;
 }
 
-// Trace Function for cwnd
-/*
-void
-TraceCwnd (uint32_t node, uint32_t cwndWindow,
-           Callback <void, uint32_t, uint32_t> CwndTrace)
-{
-  Config::ConnectWithoutContext ("/NodeList/" + std::to_string (node) + "/$ns3::TcpL4Protocol/SocketList/" + std::to_string (cwndWindow) + "/CongestionWindow", CwndTrace);
-}*/
-
-// Function to install BulkSend application
-/*void InstallBulkSend (Ptr<Node> node, Ipv4Address address, uint16_t port, std::string socketFactory,
-                      uint32_t nodeId, uint32_t cwndWindow,
-                      Callback <void, uint32_t, uint32_t> CwndTrace)*/
-
-void InstallBulkSend (Ptr<Node> node, Ipv4Address address, uint16_t port, std::string socketFactory) //TCP only
-{
-  BulkSendHelper source (socketFactory, InetSocketAddress (address, port));
-  source.SetAttribute ("MaxBytes", UintegerValue (0)); //不知道这个参数是干嘛的
-  ApplicationContainer sourceApps = source.Install (node);
-  sourceApps.Start (Seconds (10.0));
-  //Simulator::Schedule (Seconds (10.0) + Seconds (0.001), &TraceCwnd, nodeId, cwndWindow, CwndTrace);
-  //把定时跟踪输出去掉
-  sourceApps.Stop (stopTime);
-}
-
-void InstallOnOffSend (Ptr<Node> node, Ipv4Address address, uint16_t port, std::string socketFactory, 
-                      std::string onTime, std::string offTime, uint64_t payloadSize, std::string dataRate)
-{
-  OnOffHelper onoff (socketFactory, InetSocketAddress (address, port));
-  onoff.SetAttribute ("OnTime",  StringValue(onTime));
-  onoff.SetAttribute ("OffTime", StringValue(offTime));
-  onoff.SetAttribute ("PacketSize", UintegerValue(payloadSize));
-  onoff.SetAttribute ("DataRate", StringValue(dataRate)); //bit/s
-  ApplicationContainer onoffApps = onoff.Install (node);
-  onoffApps.Start (Seconds (1.0));
-  onoffApps.Stop (stopTime);
-
-  //Simulator::Schedule (Seconds (10.0) + Seconds (0.001), &TraceCwnd, nodeId, cwndWindow, CwndTrace);
-  //把定时跟踪输出去掉
-}
-
-
-// Function to install sink application
-void InstallPacketSink (Ptr<Node> node, uint16_t port, std::string socketFactory)
-{
-  PacketSinkHelper sink (socketFactory, InetSocketAddress (Ipv4Address::GetAny (), port));
-  ApplicationContainer sinkApps = sink.Install (node);
-  sinkApps.Start (Seconds (1.0));
-  sinkApps.Stop (stopTime);
-}
-
-void InstallUdpSever(Ptr<Node> node, uint16_t port) 
+void InstallUdpServer(Ptr<Node> node, uint16_t port) 
 {
   UdpServerHelper server (port);
   ApplicationContainer apps = server.Install (node);
@@ -135,9 +74,6 @@ void InstallUdpSever(Ptr<Node> node, uint16_t port)
 
 void InstallUdpClient(Ptr<Node> node, Address addr, uint16_t port, Time interval, uint32_t MaxPacketSize, uint32_t maxPacketCount)
 {
-  //uint32_t MaxPacketSize = 1024;
-  //Time interPacketInterval = Seconds (0.05);
-  //uint32_t maxPacketCount = 320;
   UdpClientHelper client (addr, port);
   client.SetAttribute ("MaxPackets", UintegerValue (maxPacketCount));
   client.SetAttribute ("Interval", TimeValue (interval));
@@ -161,11 +97,6 @@ std::vector <std::string> ipBase;
 std::vector <std::string> ipMask;
 
 std::string qdiscTypeId = "ns3::LosslessQueueDisc"; 
-//这个是装在TC Layer上的队列type, 现在把它改成on-off model的，
-
-//我们要新造一个qdiscType，它需要用另一种和routing包平行的包来和相邻的router交流堵塞信息，并据此更新自己的路由表。
-//特别地，我们是lossless network，所以不能Drop包，只能Congest包。这个应该有封装得比较好的函数可以用来做。
-
 
 
 // Function to check queue length of all queues and save results in dir + "queue-size-num.dat"
@@ -181,16 +112,19 @@ CheckQueueSize (Ptr<QueueDisc> queue)
       Ptr<NetDevice> dev = node -> GetDevice (k);
       // Output queue statics for every queue (~every device)
       queue = qd.Get(queue_num);
+      QueueDisc* qptr = &(*queue);
+      LosslessQueueDisc* lqueue = (LosslessQueueDisc*) qptr;
       uint32_t qSize = queue->GetCurrentSize ().GetValue ();
       std::ofstream fPlotQueue (std::stringstream (dir + "queue-" + std::to_string(i) + "-" + std::to_string(k) + ".dat").str ().c_str (), std::ios::out | std::ios::app);
       fPlotQueue << Simulator::Now ().GetSeconds () << " " << qSize <<" ";
       bool on = queue->onoffTable->getValue(dev->GetAddress());
       if (on){
-        fPlotQueue << "[ON]\n";
+        fPlotQueue << "[ON] ";
       }
       else{
-        fPlotQueue << "[OFF]\n";
+        fPlotQueue << "[OFF] ";
       }
+      fPlotQueue << "Transmitted: " << lqueue->getPacketsTransmitted() << "\n";
       fPlotQueue.close ();
       queue_num ++;
     }  // Check queue size every 1/100 of a second
@@ -198,7 +132,10 @@ CheckQueueSize (Ptr<QueueDisc> queue)
   Simulator::Schedule (Seconds (1), &CheckQueueSize, queue);
 }
 
-void build(std::string filename) {
+/** Build up a network according to the configurations in *filename*.
+ * 
+ */
+void buildNetwork(std::string filename) {
   std::freopen(filename.c_str(), "r", stdin);
   std::cin >> n >> m;
   // Create nodes
@@ -251,6 +188,54 @@ void build(std::string filename) {
   tch.SetQueueLimits ("ns3::DynamicQueueLimits");
 }
 
+
+/**
+ * @brief Install UDP clients and servers according to the input file.
+ * File format:
+ * [number of servers]
+ * [server node number 1] [server port number 1]
+ * [server node number 2] [server port number 2]
+ * ....
+ * [number of clients]
+ * [client node number 1] [channel number the server is on] [channel end the server is on] [server port number 1] [double interval (in seconds)] [uint32_t MaxPacketSize] [uint32_t maxPacketCount]
+ * ....
+ *  
+ * About [channel & server]:
+ * Suppose the input in topo.txt is:
+ * 3 2
+ * 0 1 1Mbps 50ms 10.0.0.0 255.255.255.0
+ * 1 2 8Kbps 200ms 10.1.0.0 255.255.255.0
+ * 
+ * Then a server built on node 1 can be refered to as 
+ * "server channel number = 0 (first channel line) & server channel end = 1 (on right side of channel)"
+ * or
+ * "server channel number = 1 (second channel line) & server channel end = 0 (on left side of channel)"
+ * ....
+ * @param filename 
+ */
+void installApps(std::string filename) {
+  std::freopen(filename.c_str(), "r", stdin);
+  int serverNum, clientNum;
+  
+  std::cin >> serverNum;  
+  for (int i=0; i<serverNum; i++){
+    int nodenum, portnum;
+    std::cin >> nodenum >> portnum;
+    InstallUdpServer(nodes.Get(nodenum), portnum);
+  }
+
+  std::cin >> clientNum;
+  for (int i=0; i<clientNum; i++){
+    int clinode, servChannelSeq, servChannelEnd, servport;
+    double interval;
+    int maxsize, maxcnt;
+    std::cin >> clinode >> servChannelSeq >> servChannelEnd >> servport >> interval >> maxsize >> maxcnt;
+    InstallUdpClient(nodes.Get (clinode), IPAddresses [servChannelSeq].GetAddress (servChannelEnd), servport, Seconds(interval), maxsize, maxcnt);
+  }
+
+  return;
+}
+
 int main (int argc, char *argv[])
 {
   globalOnoffTable = new LosslessOnoffTable();
@@ -259,50 +244,19 @@ int main (int argc, char *argv[])
   uint32_t stream = 1;
   std::string transportProt = "Udp";
   std::string socketFactory = "ns3::UdpSocketFactory";  //改用UDP
-  
-  //std::string tcpTypeId = "ns3::TcpLinuxReno"; //这个是拥塞控制算法对应的组件名称，它装载在TcpL4Protocol::SocketType上，
 
   std::string topologyFile = "scratch/topo.txt";
-  //需要详细观察代码看它是怎么被调用的，并新建一个符合我们要求的tcpType，它要根据routing table上的管子有没有堵住来决定发还是不发，
-  //写完后我们要把这个拥塞控制算法换成修改后的tcpType
-
-
-  //根据TCD的构想，网络内部的情况，绑在包上，ns3的packet类有个Tag属性，可以通过打Tag来把拥塞标记弄到包上，在网络边缘检测tag标记修改拥塞控制
-  //bool isSack = true;
-  //uint32_t delAckCount = 1;
-  //std::string recovery = "ns3::TcpClassicRecovery"; 
+  std::string appsFile = "scratch/apps.txt";
 
   CommandLine cmd;
-  //cmd.AddValue ("tcpTypeId", "TCP variant to use (e.g., ns3::TcpNewReno, ns3::TcpLinuxReno, etc.)", tcpTypeId);
   cmd.AddValue ("qdiscTypeId", "Queue disc for gateway (e.g., ns3::CoDelQueueDisc)", qdiscTypeId);
-  cmd.AddValue ("topologyFile", "Path to the file describing the topology structure you need (e.g., scratch/topo.txt)", topologyFile);
-  //cmd.AddValue ("segmentSize", "TCP segment size (bytes)", segmentSize);
-  //cmd.AddValue ("delAckCount", "Delayed ack count", delAckCount);
-  //cmd.AddValue ("enableSack", "Flag to enable/disable sack in TCP", isSack);
+  cmd.AddValue ("topologyFile", "Path to the file describing the network topology structure you need (e.g., scratch/topo.txt)", topologyFile);
+  cmd.AddValue ("appsFile", "Path to the file describing how UDP server/client applications are installed.", appsFile);
   cmd.AddValue ("stopTime", "Stop time for applications / simulation time will be stopTime", stopTime);
-  //cmd.AddValue ("recovery", "Recovery algorithm type to use (e.g., ns3::TcpPrrRecovery", recovery);
   cmd.Parse (argc, argv);
 
   TypeId qdTid;
   NS_ABORT_MSG_UNLESS (TypeId::LookupByNameFailSafe (qdiscTypeId, &qdTid), "TypeId " << qdiscTypeId << " not found");
-
-  /*
-  // Set recovery algorithm and TCP variant
-  Config::SetDefault ("ns3::TcpL4Protocol::RecoveryType", TypeIdValue (TypeId::LookupByName (recovery)));
-  if (tcpTypeId.compare ("ns3::TcpWestwoodPlus") == 0)
-    {
-      // TcpWestwoodPlus is not an actual TypeId name; we need TcpWestwood here
-      Config::SetDefault ("ns3::TcpL4Protocol::SocketType", TypeIdValue (TcpWestwood::GetTypeId ()));
-      // the default protocol type in ns3::TcpWestwood is WESTWOOD
-      Config::SetDefault ("ns3::TcpWestwood::ProtocolType", EnumValue (TcpWestwood::WESTWOODPLUS));
-    }
-  else
-    {
-      TypeId tcpTid;
-      NS_ABORT_MSG_UNLESS (TypeId::LookupByNameFailSafe (tcpTypeId, &tcpTid), "TypeId " << tcpTypeId << " not found");
-      Config::SetDefault ("ns3::TcpL4Protocol::SocketType", TypeIdValue (TypeId::LookupByName (tcpTypeId)));
-    }*/
-
 
   // Create directories to store dat files
   struct stat buffer;
@@ -320,14 +274,10 @@ int main (int argc, char *argv[])
   NS_ASSERT_MSG (retVal == 0, "Error in return value");
   retVal = system ((dirToSave + "/queueTraces/").c_str ());
   NS_ASSERT_MSG (retVal == 0, "Error in return value");
- // retVal = system ((dirToSave + "/cwndTraces/").c_str ());
- // NS_ASSERT_MSG (retVal == 0, "Error in return value");
+
   NS_UNUSED (retVal);
 
-  std::cout << "cout test\n";
-  build(topologyFile);
-
-  std::cout << "cout test\n";
+  buildNetwork(topologyFile);
 
   // Calls function to check queue size
   Simulator::ScheduleNow (&CheckQueueSize, qd.Get (0));
@@ -339,25 +289,8 @@ int main (int argc, char *argv[])
   streamWrapper = asciiTraceHelper.CreateFileStream (dir + "/queueTraces/drop-0.dat");
   qd.Get (0)->TraceConnectWithoutContext ("Drop", MakeBoundCallback (&DropAtQueue, streamWrapper));
 
-  // Install packet sink at receiver side
-  uint16_t port1 = 50000;
-  //uint16_t port2 = 3;
-  InstallUdpSever(nodes.Get(1), port1);
-  //InstallUdpSever(nodes.Get(3), port2);
-  //InstallPacketSink (nodes.Get (3), port1, socketFactory);
-  //InstallPacketSink (nodes.Get (3), port2, socketFactory);
 
-  // Install BulkSend application
-  //InstallBulkSend (leftNodes.Get (0), routerToRightIPAddress [0].GetAddress (1), port, socketFactory, 2, 0, MakeCallback (&CwndChange));
-  //InstallBulkSend (leftNodes.Get (0), routerToRightIPAddress [0].GetAddress (1), port, socketFactory);
-  InstallUdpClient(nodes.Get (0), IPAddresses [0].GetAddress (1), port1, Seconds (0.1), 1024, 500);
-  //InstallUdpClient(nodes.Get (4), IPAddresses [2].GetAddress (1), port1, Seconds (0.05), 1024, 320);
-  //InstallOnOffSend (nodes.Get (0), IPAddresses [2].GetAddress (1), port1, socketFactory, 
-  //                  "ns3::ConstantRandomVariable[Constant=1]", "ns3::ConstantRandomVariable[Constant=0]", 
-  //                  1024, "1Mbps");
-  //InstallOnOffSend (nodes.Get (4), IPAddresses [2].GetAddress (1), port2, socketFactory, 
-  //                  "ns3::ConstantRandomVariable[Constant=1]", "ns3::ConstantRandomVariable[Constant=0]", 
-  //                  1024, "1Mbps");
+  installApps(appsFile);
 
   // Enable PCAP on all the point to point interfaces
   channelHelpers[0].EnablePcapAll (dir + "pcap/ns-3", true);
