@@ -975,7 +975,6 @@ void
 QueueDisc::Run (void)
 {
   NS_LOG_FUNCTION (this);
-  //std::cout << "queue-disc.cc: A queue-disc started to Run().\n";
   if (RunBegin ())
     {
       Restart();
@@ -1101,7 +1100,6 @@ QueueDisc::Transmit (Ptr<QueueDiscItem> item)
 {
   NS_LOG_FUNCTION (this << item);
   
-  std::cout << "At time {" << Simulator::Now ().GetSeconds () << "}, Transmit  start\n";
   // if the device queue is stopped, requeue the packet and return false.
   // Note that if the underlying device is tc-unaware, packets are never
   // requeued because the queues of tc-unaware devices are never stopped
@@ -1119,7 +1117,7 @@ QueueDisc::Transmit (Ptr<QueueDiscItem> item)
       item->GetPacket ()->RemovePacketTag (priorityTag);
     }
   NS_ASSERT_MSG (m_send, "Send callback not set");
-  std::cout << "At time {" << Simulator::Now ().GetSeconds () << "}, Transmit  called m_send\n";
+  std::cout << "**m_send!\n";
   m_send (item);
 
   // the behavior here slightly diverges from Linux. In Linux, it is advised that
@@ -1141,11 +1139,9 @@ QueueDisc::Transmit (Ptr<QueueDiscItem> item)
   if (GetNPackets () == 0 ||
       (m_devQueueIface && m_devQueueIface->GetTxQueue (item->GetTxQueueIndex ())->IsStopped ()))
     {
-    std::cout << "At time {" << Simulator::Now ().GetSeconds () << "}, Transmit() returns false\n";
       return false;
     }
 
-  std::cout << "At time {" << Simulator::Now ().GetSeconds () << "}, Be ready to Transmit again\n";
   return true;
 }
 

@@ -814,7 +814,8 @@ UdpSocketDcqcn::DequeueAndTransmit(void) {
 
 int UdpSocketDcqcn::wrapDoSendTo(Ptr<Packet> p, Ipv4Address dest, uint16_t port, uint8_t tos) {
 
-  std::cout <<"At Time <" << Simulator::Now ().GetSeconds () << ">, wrapDoSendTo: packet=[" << p << "], dest=[" << dest << "], port=[" << port << "].\n";
+  static int num = 0; ++num;
+  std::cout <<"At Time <" << Simulator::Now ().GetSeconds () << ">, the {" << num << "}th of AppDoSend: packet=[" << p << "], dest=[" << dest << "], port=[" << port << "].\n";
 	m_sendingBuffer.push(BufferItem(p, dest, port, tos)); //TODO:定义一下类型
 	
 	DequeueAndTransmit();
@@ -825,8 +826,7 @@ int
 UdpSocketDcqcn::DoSendTo (Ptr<Packet> p, Ipv4Address dest, uint16_t port, uint8_t tos)
 {
   static int num = 0; ++num;
-  std::cout << "*************the [" << num <<"]th of ipv4DoSendTo() with tos is called\n";
-  std::cout <<"At Time <" << Simulator::Now ().GetSeconds () << ">, DoSendTo: packet=[" << p << "], dest=[" << dest << "], port=[" << port << "].\n";
+  std::cout <<"At Time <" << Simulator::Now ().GetSeconds () << ">, the {" << num << "}th of CC_RealSend: packet=[" << p << "], dest=[" << dest << "], port=[" << port << "].\n";
  
   NS_LOG_FUNCTION (this << p << dest << port << (uint16_t) tos);
   if (m_boundnetdevice)
