@@ -568,6 +568,13 @@ QueueDisc::SetSendCallback (SendCallback func)
   m_send = func;
 }
 
+void
+QueueDisc::SentSendRate (DataRate bps)
+{
+  NS_LOG_FUNCTION (this);
+  m_bps = bps;
+}
+
 QueueDisc::SendCallback
 QueueDisc::GetSendCallback (void) const
 {
@@ -1104,6 +1111,7 @@ QueueDisc::Transmit (Ptr<QueueDiscItem> item)
       item->GetPacket ()->RemovePacketTag (priorityTag);
     }
   NS_ASSERT_MSG (m_send, "Send callback not set");
+  std::cout << "At time {" << Simulator::Now ().GetSeconds () << "}, Transmit  called m_send\n";
   m_send (item);
 
   // the behavior here slightly diverges from Linux. In Linux, it is advised that
@@ -1125,6 +1133,7 @@ QueueDisc::Transmit (Ptr<QueueDiscItem> item)
   if (GetNPackets () == 0 ||
       (m_devQueueIface && m_devQueueIface->GetTxQueue (item->GetTxQueueIndex ())->IsStopped ()))
     {
+    std::cout << "At time {" << Simulator::Now ().GetSeconds () << "}, Transmit() returns false\n";
       return false;
     }
 

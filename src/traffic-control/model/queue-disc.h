@@ -718,6 +718,7 @@ private:
   uint32_t m_quota;                 //!< Maximum number of packets dequeued in a qdisc run
   Ptr<NetDeviceQueueInterface> m_devQueueIface;   //!< NetDevice queue interface
   SendCallback m_send;              //!< Callback used to send a packet to the receiving object
+  DataRate    m_bps;                //!< DataRate to estimated when to send next packet>
   bool m_running;                   //!< The queue disc is performing multiple dequeue operations
   Ptr<QueueDiscItem> m_requeued;    //!< The last packet that failed to be transmitted
   bool m_peeked;                    //!< A packet was dequeued because Peek was called
