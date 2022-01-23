@@ -62,7 +62,7 @@ DropAtQueue (Ptr<OutputStreamWrapper> stream, Ptr<const QueueDiscItem> item)
   *stream->GetStream () << Simulator::Now ().GetSeconds () << " 1" << std::endl;
 }
 
-void InstallUdpSever(Ptr<Node> node, uint16_t port) 
+void InstallUdpServer(Ptr<Node> node, uint16_t port) 
 {
   UdpServerHelper server (port);
   ApplicationContainer apps = server.Install (node);
@@ -186,6 +186,54 @@ void buildNetwork(std::string filename) {
   tch.SetQueueLimits ("ns3::DynamicQueueLimits");
 }
 
+
+/**
+ * @brief Install UDP clients and servers according to the input file.
+ * File format:
+ * [number of servers]
+ * [server node number 1] [server port number 1]
+ * [server node number 2] [server port number 2]
+ * ....
+ * [number of clients]
+ * [client node number 1] [channel number the server is on] [channel end the server is on] [server port number 1] [double interval (in seconds)] [uint32_t MaxPacketSize] [uint32_t maxPacketCount]
+ * ....
+ *  
+ * About [channel & server]:
+ * Suppose the input in topo.txt is:
+ * 3 2
+ * 0 1 1Mbps 50ms 10.0.0.0 255.255.255.0
+ * 1 2 8Kbps 200ms 10.1.0.0 255.255.255.0
+ * 
+ * Then a server built on node 1 can be refered to as 
+ * "server channel number = 0 (first channel line) & server channel end = 1 (on right side of channel)"
+ * or
+ * "server channel number = 1 (second channel line) & server channel end = 0 (on left side of channel)"
+ * ....
+ * @param filename 
+ */
+void installApps(std::string filename) {
+  std::freopen(filename.c_str(), "r", stdin);
+  int serverNum, clientNum;
+  
+  std::cin >> serverNum;  
+  for (int i=0; i<serverNum; i++){
+    int nodenum, portnum;
+    std::cin >> nodenum >> portnum;
+    InstallUdpServer(nodes.Get(nodenum), portnum);
+  }
+
+  std::cin >> clientNum;
+  for (int i=0; i<clientNum; i++){
+    int clinode, servChannelSeq, servChannelEnd, servport;
+    double interval;
+    int maxsize, maxcnt;
+    std::cin >> clinode >> servChannelSeq >> servChannelEnd >> servport >> interval >> maxsize >> maxcnt;
+    InstallUdpClient(nodes.Get (clinode), IPAddresses [servChannelSeq].GetAddress (servChannelEnd), servport, Seconds(interval), maxsize, maxcnt);
+  }
+
+  return;
+}
+
 int main (int argc, char *argv[])
 {
   globalOnoffTable = new LosslessOnoffTable();
@@ -239,13 +287,8 @@ int main (int argc, char *argv[])
   streamWrapper = asciiTraceHelper.CreateFileStream (dir + "/queueTraces/drop-0.dat");
   qd.Get (0)->TraceConnectWithoutContext ("Drop", MakeBoundCallback (&DropAtQueue, streamWrapper));
 
-  // Install packet sink at receiver side
-  uint16_t port1 = 50000;
-  //uint16_t port2 = 3;
-  InstallUdpSever(nodes.Get(3), port1);
-
-  InstallUdpClient(nodes.Get (0), IPAddresses [2].GetAddress (1), port1, Seconds (0.50), 32, 320);
-
+  installApps(appsFile);
+  
   // Enable PCAP on all the point to point interfaces
   channelHelpers[0].EnablePcapAll (dir + "pcap/ns-3", true);
   channelHelpers[m -1].EnablePcapAll (dir + "pcap/ns-3", true);
