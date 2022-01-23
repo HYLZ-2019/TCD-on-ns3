@@ -1085,7 +1085,8 @@ bool
 QueueDisc::Transmit (Ptr<QueueDiscItem> item)
 {
   NS_LOG_FUNCTION (this << item);
-
+  
+  std::cout << "At time {" << Simulator::Now ().GetSeconds () << "}, Transmit  start\n";
   // if the device queue is stopped, requeue the packet and return false.
   // Note that if the underlying device is tc-unaware, packets are never
   // requeued because the queues of tc-unaware devices are never stopped
@@ -1127,6 +1128,7 @@ QueueDisc::Transmit (Ptr<QueueDiscItem> item)
       return false;
     }
 
+  std::cout << "At time {" << Simulator::Now ().GetSeconds () << "}, Be ready to Transmit again\n";
   return true;
 }
 
