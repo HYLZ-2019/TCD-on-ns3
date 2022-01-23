@@ -575,7 +575,6 @@ Ipv4L3Protocol::Receive ( Ptr<NetDevice> device, Ptr<const Packet> p, uint16_t p
   NS_LOG_LOGIC ("Packet from " << from << " received on node " << 
                 m_node->GetId ());
 
-  std::cout << "Ipv4L3Protocol::Receive" << p << " " << protocol << "from" << from << "to" << to << ", " << device << std::endl;
   int32_t interface = GetInterfaceForDevice(device);
   NS_ASSERT_MSG (interface != -1, "Received a packet from an interface that is not known to IPv4");
 
@@ -585,8 +584,6 @@ Ipv4L3Protocol::Receive ( Ptr<NetDevice> device, Ptr<const Packet> p, uint16_t p
 
   if (ipv4Interface->IsUp ())
     {
-
-    std::cout << "call m_rxTrace\n";
       m_rxTrace (packet, m_node->GetObject<Ipv4> (), interface);
     }
   else
@@ -967,6 +964,8 @@ Ipv4L3Protocol::SendRealOut (Ptr<Ipv4Route> route,
                              Ipv4Header const &ipHeader)
 {
   NS_LOG_FUNCTION (this << route << packet << &ipHeader);
+  static int num = 0; ++num;
+  std::cout <<"At Time <" << Simulator::Now ().GetSeconds () << ">, the {" << num << "}th of Ipv4L3Protocol::SendRealOut\n";
   if (route == 0)
     {
       NS_LOG_WARN ("No route to host.  Drop.");

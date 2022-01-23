@@ -50,7 +50,8 @@
 
 using namespace ns3;
 std::string dir = "results/";
-Time stopTime = Seconds (120);
+Time stopTime = Seconds (20);
+//Time EventstopTime = Seconds (200);
 uint32_t segmentSize = 524;
 
 
@@ -289,6 +290,26 @@ int main (int argc, char *argv[])
 
   installApps(appsFile);
   
+  // Install packet sink at receiver side
+  uint16_t port1 = 50000;
+  //uint16_t port2 = 3;
+  InstallUdpSever(nodes.Get(1), port1);
+  //InstallUdpSever(nodes.Get(3), port2);
+  //InstallPacketSink (nodes.Get (3), port1, socketFactory);
+  //InstallPacketSink (nodes.Get (3), port2, socketFactory);
+
+  // Install BulkSend application
+  //InstallBulkSend (leftNodes.Get (0), routerToRightIPAddress [0].GetAddress (1), port, socketFactory, 2, 0, MakeCallback (&CwndChange));
+  //InstallBulkSend (leftNodes.Get (0), routerToRightIPAddress [0].GetAddress (1), port, socketFactory);
+  InstallUdpClient(nodes.Get (0), IPAddresses [0].GetAddress (1), port1, Seconds (0.1), 1024, 500);
+  //InstallUdpClient(nodes.Get (4), IPAddresses [2].GetAddress (1), port1, Seconds (0.05), 1024, 320);
+  //InstallOnOffSend (nodes.Get (0), IPAddresses [2].GetAddress (1), port1, socketFactory, 
+  //                  "ns3::ConstantRandomVariable[Constant=1]", "ns3::ConstantRandomVariable[Constant=0]", 
+  //                  1024, "1Mbps");
+  //InstallOnOffSend (nodes.Get (4), IPAddresses [2].GetAddress (1), port2, socketFactory, 
+  //                  "ns3::ConstantRandomVariable[Constant=1]", "ns3::ConstantRandomVariable[Constant=0]", 
+  //                  1024, "1Mbps");
+
   // Enable PCAP on all the point to point interfaces
   channelHelpers[0].EnablePcapAll (dir + "pcap/ns-3", true);
   channelHelpers[m -1].EnablePcapAll (dir + "pcap/ns-3", true);
