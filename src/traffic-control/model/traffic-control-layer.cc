@@ -200,6 +200,7 @@ TrafficControlLayer::ScanDevices (void)
               q->SetNetDeviceQueueInterface (ndqi);
               q->SetSendCallback ([dev] (Ptr<QueueDiscItem> item)
                                   { dev->Send (item->GetPacket (), item->GetAddress (), item->GetProtocol ()); });
+              q->SetSendRate (dev-> GetDataRate(), dev -> GetInterframeGap());
             }
         }
     }

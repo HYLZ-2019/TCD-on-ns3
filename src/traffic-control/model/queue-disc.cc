@@ -569,10 +569,11 @@ QueueDisc::SetSendCallback (SendCallback func)
 }
 
 void
-QueueDisc::SentSendRate (DataRate bps)
+QueueDisc::SentSendRate (DataRate bps, Time tInterframeGap)
 {
   NS_LOG_FUNCTION (this);
   m_bps = bps;
+  m_tInterframeGap = tInterframeGap;
 }
 
 QueueDisc::SendCallback
