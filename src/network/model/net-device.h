@@ -25,6 +25,7 @@
 #include "ns3/callback.h"
 #include "ns3/object.h"
 #include "ns3/ptr.h"
+#include "ns3/data-rate.h"
 #include "packet.h"
 #include "address.h"
 #include "ns3/ipv4-address.h"
@@ -176,6 +177,13 @@ public:
    * not true.
    */
   virtual Address GetBroadcast (void) const = 0;
+
+  virtual DataRate GetDataRate() {
+    return DataRate("1b/s");
+  }
+  virtual Time GetInterframeGap() {
+    return Seconds (5555);
+  }
 
   /**
    * \return value of m_isMulticast flag
