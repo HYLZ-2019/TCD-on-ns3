@@ -93,7 +93,6 @@ public:
    * \param bps the data rate at which this object operates
    */
   void SetDataRate (DataRate bps);
-  DataRate GetDataRate ();
 
   /**
    * Set the interframe gap used to separate packets.  The interframe gap
@@ -102,7 +101,6 @@ public:
    * \param t the interframe gap time
    */
   void SetInterframeGap (Time t);
-  Time GetInterframeGap ();
 
   /**
    * Attach the device to a channel.
