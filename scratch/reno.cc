@@ -50,7 +50,9 @@
 
 using namespace ns3;
 std::string dir = "results/";
+
 Time stopTime = Seconds (120);
+
 uint32_t segmentSize = 524;
 
 
@@ -287,8 +289,9 @@ int main (int argc, char *argv[])
   streamWrapper = asciiTraceHelper.CreateFileStream (dir + "/queueTraces/drop-0.dat");
   qd.Get (0)->TraceConnectWithoutContext ("Drop", MakeBoundCallback (&DropAtQueue, streamWrapper));
 
+
   installApps(appsFile);
-  
+
   // Enable PCAP on all the point to point interfaces
   channelHelpers[0].EnablePcapAll (dir + "pcap/ns-3", true);
   channelHelpers[m -1].EnablePcapAll (dir + "pcap/ns-3", true);

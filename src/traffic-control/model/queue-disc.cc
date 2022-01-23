@@ -568,6 +568,14 @@ QueueDisc::SetSendCallback (SendCallback func)
   m_send = func;
 }
 
+void
+QueueDisc::SetSendRate (DataRate bps, Time tInterframeGap)
+{
+  NS_LOG_FUNCTION (this);
+  m_bps = bps;
+  m_tInterframeGap = tInterframeGap;
+}
+
 QueueDisc::SendCallback
 QueueDisc::GetSendCallback (void) const
 {
@@ -967,10 +975,10 @@ void
 QueueDisc::Run (void)
 {
   NS_LOG_FUNCTION (this);
-  //std::cout << "queue-disc.cc: A queue-disc started to Run().\n";
   if (RunBegin ())
     {
-      uint32_t quota = m_quota;
+      Restart();
+      /*uint32_t quota = m_quota;
       while (Restart ())
         {
           quota -= 1;
@@ -980,7 +988,7 @@ QueueDisc::Run (void)
               break;
             }
         }
-      RunEnd ();
+      RunEnd ();*/
     }
 }
 
@@ -1012,8 +1020,14 @@ QueueDisc::Restart (void)
   if (item == 0)
     {
       NS_LOG_LOGIC ("No packet to send");
+      RunEnd();
       return false;
     }
+
+  Ptr<Packet> p = item -> GetPacket();
+  Time txTime = m_bps.CalculateBytesTxTime (p->GetSize ());
+  Time txCompleteTime = txTime + m_tInterframeGap;
+  Simulator::Schedule (txCompleteTime, &QueueDisc::Restart, this);
 
   return Transmit (item);
 }
@@ -1085,7 +1099,7 @@ bool
 QueueDisc::Transmit (Ptr<QueueDiscItem> item)
 {
   NS_LOG_FUNCTION (this << item);
-
+  
   // if the device queue is stopped, requeue the packet and return false.
   // Note that if the underlying device is tc-unaware, packets are never
   // requeued because the queues of tc-unaware devices are never stopped
@@ -1103,6 +1117,7 @@ QueueDisc::Transmit (Ptr<QueueDiscItem> item)
       item->GetPacket ()->RemovePacketTag (priorityTag);
     }
   NS_ASSERT_MSG (m_send, "Send callback not set");
+  std::cout << "**m_send!\n";
   m_send (item);
 
   // the behavior here slightly diverges from Linux. In Linux, it is advised that
