@@ -201,7 +201,11 @@ LosslessQueueDisc::DoDequeue (void)
   if (havetag){
     tagval |= tcdTag.GetSimpleValue();
   }
-  switch (getCurrentTCD()){
+
+  TcdState curTCD = getCurrentTCD();
+  std::cout << "TCL: current state is " << curTCD << ", length of the queue is " << GetCurrentSize() << std::endl;
+
+  switch (curTCD){
     case TcdState::TCD_CONGESTION:
       tagval |= TCD_CONGESTED_BIT;
       break;

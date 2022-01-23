@@ -71,8 +71,8 @@ public:
   QueueSize qlenLowerBound = QueueSize("5p");
   QueueSize qlenUpperBound = QueueSize("10p");
   QueueSize tcdThreshold = QueueSize("4p");
-  Time max_t_on = Time("1s");
-  Time qsize_decrease_update_interval = Time("0.5s");
+  Time max_t_on = Time("0.2s");
+  Time qsize_decrease_update_interval = Time("0.1s");
 
   /**
    * @brief Update m_qState and m_start_clear_time when a packet is clear to send.
