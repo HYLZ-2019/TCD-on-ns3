@@ -50,7 +50,8 @@
 
 using namespace ns3;
 std::string dir = "results/";
-Time stopTime = Seconds (100);
+Time stopTime = Seconds (20);
+//Time EventstopTime = Seconds (200);
 uint32_t segmentSize = 524;
 
 
