@@ -569,7 +569,7 @@ QueueDisc::SetSendCallback (SendCallback func)
 }
 
 void
-QueueDisc::SentSendRate (DataRate bps, Time tInterframeGap)
+QueueDisc::SetSendRate (DataRate bps, Time tInterframeGap)
 {
   NS_LOG_FUNCTION (this);
   m_bps = bps;
@@ -978,7 +978,8 @@ QueueDisc::Run (void)
   //std::cout << "queue-disc.cc: A queue-disc started to Run().\n";
   if (RunBegin ())
     {
-      uint32_t quota = m_quota;
+      Restart();
+      /*uint32_t quota = m_quota;
       while (Restart ())
         {
           quota -= 1;
@@ -988,7 +989,7 @@ QueueDisc::Run (void)
               break;
             }
         }
-      RunEnd ();
+      RunEnd ();*/
     }
 }
 
@@ -1020,8 +1021,14 @@ QueueDisc::Restart (void)
   if (item == 0)
     {
       NS_LOG_LOGIC ("No packet to send");
+      RunEnd();
       return false;
     }
+
+  Ptr<Packet> p = item -> GetPacket();
+  Time txTime = m_bps.CalculateBytesTxTime (p->GetSize ());
+  Time txCompleteTime = txTime + m_tInterframeGap;
+  Simulator::Schedule (txCompleteTime, &QueueDisc::Restart, this);
 
   return Transmit (item);
 }
