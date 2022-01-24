@@ -765,7 +765,7 @@ UdpSocketDcqcn::TransmitStart(Ptr<Packet> p) {
 			}
 		}
 
-    std::cout << "call rpr_cnm_received with m_alpha_resume_interval="<<m_alpha_resume_interval<<std::endl;
+    //std::cout << "call rpr_cnm_received with m_alpha_resume_interval="<<m_alpha_resume_interval<<std::endl;
 		m_rpByteStage[hop] = 0;
 		m_rpTimeStage[hop] = 0;
 		//m_alpha[findex][hop] = (1-m_g)*m_alpha[findex][hop] + m_g*fraction;
@@ -868,7 +868,7 @@ UdpSocketDcqcn::DequeueAndTransmit(void) {
 
 int UdpSocketDcqcn::wrapDoSendTo(Ptr<Packet> p, Ipv4Address dest, uint16_t port, uint8_t tos) {
 
-  std::cout <<"At Time <" << Simulator::Now ().GetSeconds () << ">, wrapDoSendTo: packet=[" << p << "], dest=[" << dest << "], port=[" << port << "].\n";
+  //std::cout <<"At Time <" << Simulator::Now ().GetSeconds () << ">, wrapDoSendTo: packet=[" << p << "], dest=[" << dest << "], port=[" << port << "].\n";
 	m_sendingBuffer.push(BufferItem(p, dest, port, tos)); //TODO:定义一下类型
 	
 	DequeueAndTransmit();
@@ -879,8 +879,8 @@ int
 UdpSocketDcqcn::DoSendTo (Ptr<Packet> p, Ipv4Address dest, uint16_t port, uint8_t tos)
 {
   static int num = 0; ++num;
-  std::cout << "*************the [" << num <<"]th of ipv4DoSendTo() with tos is called\n";
-  std::cout <<"At Time <" << Simulator::Now ().GetSeconds () << ">, DoSendTo: packet=[" << p << "], dest=[" << dest << "], port=[" << port << "].\n";
+  //std::cout << "*************the [" << num <<"]th of ipv4DoSendTo() with tos is called\n";
+  //std::cout <<"At Time <" << Simulator::Now ().GetSeconds () << ">, DoSendTo: packet=[" << p << "], dest=[" << dest << "], port=[" << port << "].\n";
  
   NS_LOG_FUNCTION (this << p << dest << port << (uint16_t) tos);
   if (m_boundnetdevice)
@@ -1061,8 +1061,8 @@ UdpSocketDcqcn::DoSendTo (Ptr<Packet> p, Ipv4Address dest, uint16_t port, uint8_
 int
 UdpSocketDcqcn::DoSendTo (Ptr<Packet> p, Ipv4Address dest, uint16_t port)
 {
-  std::cout << "DoSendTo Ipv4 without tos\n";
-  std::cout <<"At Time <" << Simulator::Now ().GetSeconds () << ">, DoSendTo: packet=[" << p << "], dest=[" << dest << "], port=[" << port << "].\n";
+  //std::cout << "DoSendTo Ipv4 without tos\n";
+  //std::cout <<"At Time <" << Simulator::Now ().GetSeconds () << ">, DoSendTo: packet=[" << p << "], dest=[" << dest << "], port=[" << port << "].\n";
   NS_LOG_FUNCTION (this << p << dest << port);
   if (m_boundnetdevice)
     {
@@ -1579,10 +1579,10 @@ UdpSocketDcqcn::BindToNetDevice (Ptr<NetDevice> netdevice)
 void
 UdpSocketDcqcn::CheckandSendQCN(Ipv4Address source, uint32_t port) {
   if (m_total != 0) {  
-    std::cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n";
-    std::cout <<"At Time <" << Simulator::Now ().GetSeconds () << ">, CheckandSendQCN() is called. The socketID is "<< m_socketID<<"\n";
-    std::cout << "m_ecnbits = [" << (int)m_ecnbits << "], m_qfb = [" << m_qfb << "], m_total = [" << m_total << "].\n";
-    std::cout << "--------------------------------------------------------------------------------------------\n";
+    //std::cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n";
+    //std::cout <<"At Time <" << Simulator::Now ().GetSeconds () << ">, CheckandSendQCN() is called. The socketID is "<< m_socketID<<"\n";
+    //std::cout << "m_ecnbits = [" << (int)m_ecnbits << "], m_qfb = [" << m_qfb << "], m_total = [" << m_total << "].\n";
+    //std::cout << "--------------------------------------------------------------------------------------------\n";
   }
   bool iscongested = (m_ecnbits & (TCD_CONGESTED_BIT | TCD_UNDETERMINED_BIT));
   if (iscongested) {
@@ -1593,7 +1593,7 @@ UdpSocketDcqcn::CheckandSendQCN(Ipv4Address source, uint32_t port) {
 			p -> AddPacketTag(qcnTag);
 			//参数需要编
 			DoSendTo (p, source, port, GetIpTos ());
-      std::cout << qcnTag.GetSimpleValue() << std::endl;
+      //std::cout << qcnTag.GetSimpleValue() << std::endl;
 			//DoSendTo就直接发包了 m_udp -> Send (p->Copy (), addri, dest, m_endPoint->GetLocalPort (), port);
 	}
   m_ecnbits = 0;
@@ -1605,10 +1605,10 @@ void
 UdpSocketDcqcn::ForwardUp (Ptr<Packet> packet, Ipv4Header header, uint16_t port,
                           Ptr<Ipv4Interface> incomingInterface)
 {
-  std::cout << "----------------------------------------------------------------------\n";
+  //std::cout << "----------------------------------------------------------------------\n";
   static int num = 0; ++num;
-  std::cout <<"At Time <" << Simulator::Now ().GetSeconds () << ">, the {" << num << "}th of UdpSocketDcqcn::ForwardUp; The socketID is "<< m_socketID<<"\n";
-  std::cout << "packet=[" << packet << "], header=[" << header << "], port=[" << port << "].\n";
+  //std::cout <<"At Time <" << Simulator::Now ().GetSeconds () << ">, the {" << num << "}th of UdpSocketDcqcn::ForwardUp; The socketID is "<< m_socketID<<"\n";
+  //std::cout << "packet=[" << packet << "], header=[" << header << "], port=[" << port << "].\n";
  
 	NS_LOG_FUNCTION (this << packet << header << port);
 	if (m_shutdownRecv) {
@@ -1654,9 +1654,9 @@ UdpSocketDcqcn::ForwardUp (Ptr<Packet> packet, Ipv4Header header, uint16_t port,
 	packet -> RemovePacketTag(myTag);
 	uint64_t simpleValue = myTag.GetSimpleValue();
 	
-  std::cout << "with Tag ["<< (uint)simpleValue << "] on the packet.\n";
+  //std::cout << "with Tag ["<< (uint)simpleValue << "] on the packet.\n";
 
-  std::cout << "----------------------------------------------------------------------\n";
+  //std::cout << "----------------------------------------------------------------------\n";
 	bool isQCN = ((simpleValue & TCD_QCN_BIT) != 0);
 	if(!isQCN) { //如果是数据包
 		//收包
@@ -1673,7 +1673,7 @@ UdpSocketDcqcn::ForwardUp (Ptr<Packet> packet, Ipv4Header header, uint16_t port,
     
     uint8_t myecnbits = (simpleValue & TCD_ECN_MASK);
 		// The 3 bits represent whether a packet has gone through CONG/UNDET/NONCON queues.
-    std::cout << (int)((int8_t)m_ecnbits) << std::endl;
+    //std::cout << (int)((int8_t)m_ecnbits) << std::endl;
     if ((int8_t)m_ecnbits == -1) {
       m_ecnbits = myecnbits;
       m_qfb = (myecnbits != 0 ? 1 : 0);
@@ -1696,7 +1696,7 @@ UdpSocketDcqcn::ForwardUp (Ptr<Packet> packet, Ipv4Header header, uint16_t port,
     uint8_t ecnbits = ((simpleValue >> 16) & TCD_ECN_MASK);
     uint16_t qfb = ((simpleValue >> 32) & MASK);
     uint16_t total = ((simpleValue >> 48) & MASK);
-    std::cout << "ecnbits="<< (int)ecnbits << ", qfb=" << qfb << ", total="<<total << std::endl;
+    //std::cout << "ecnbits="<< (int)ecnbits << ", qfb=" << qfb << ", total="<<total << std::endl;
 		if (m_rate == 0) { //lazy initialization	
 			m_rate = m_bps;
 			for (uint32_t j = 0; j < maxHop; j++) {
