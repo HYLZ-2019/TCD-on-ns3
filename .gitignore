@@ -4,3 +4,4 @@ build
 .vscode
 .lock-waf*
 results
+output.txt
