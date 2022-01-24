@@ -141,8 +141,8 @@ private:
   int FinishBind (void);
 
   void DequeueAndTransmit(void);
-  void TransmitStart(Ptr<Packet> p);
-  void TransmitComplete(void);
+//  void TransmitStart(Ptr<Packet> p);
+//  void TransmitComplete(void);
 
   /**
    * \brief Called by the L3 protocol when it received a packet to pass on to TCP.

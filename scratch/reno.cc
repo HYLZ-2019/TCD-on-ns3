@@ -50,7 +50,7 @@
 
 using namespace ns3;
 std::string dir = "results/";
-Time stopTime = Seconds (12);
+Time stopTime = Seconds (180);
 Time ColdStartBegin = Seconds (1);
 Time ColdStartEnd = Seconds (10);
 //Time EventstopTime = Seconds (200);
