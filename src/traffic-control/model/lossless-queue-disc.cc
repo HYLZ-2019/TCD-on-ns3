@@ -199,7 +199,7 @@ LosslessQueueDisc::DoDequeue (void)
   MyTag tcdTag;
   Ptr<Packet> pk = realitem->GetPacket();
   bool havetag = pk->RemovePacketTag(tcdTag);
-  uint8_t tagval = 0;
+  uint64_t tagval = 0;
   if (havetag){
     tagval |= tcdTag.GetSimpleValue();
   }

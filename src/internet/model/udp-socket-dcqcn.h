@@ -21,6 +21,7 @@
 // The 3rd bit represents whether the packet is a pure QCN report.
 #define TCD_QCN_BIT 8
 
+#define MASK (((uint64_t)2 << 16) - 1)
 // The lower 3 bits are used to represent the 3 TCD states.
 #define TCD_ECN_MASK 7
 #define TCD_CONGESTED_BIT 4
@@ -353,14 +354,14 @@ public:
    * Set the tag value
    * \param value The tag value.
    */
-  void SetSimpleValue (uint8_t value);
+  void SetSimpleValue (uint64_t value);
   /**
    * Get the tag value
    * \return the tag value.
    */
-  uint8_t GetSimpleValue (void) const;
+  uint64_t GetSimpleValue (void) const;
 private:
-  uint8_t m_simpleValue;  //!< tag value
+  uint64_t m_simpleValue;  //!< tag value
 };
 
 class SocketAddressTag : public Tag

@@ -50,7 +50,9 @@
 
 using namespace ns3;
 std::string dir = "results/";
-Time stopTime = Seconds (20);
+Time stopTime = Seconds (12);
+Time ColdStartBegin = Seconds (1);
+Time ColdStartEnd = Seconds (10);
 //Time EventstopTime = Seconds (200);
 uint32_t segmentSize = 524;
 
@@ -63,23 +65,23 @@ DropAtQueue (Ptr<OutputStreamWrapper> stream, Ptr<const QueueDiscItem> item)
   *stream->GetStream () << Simulator::Now ().GetSeconds () << " 1" << std::endl;
 }
 
-void InstallUdpServer(Ptr<Node> node, uint16_t port) 
+void InstallUdpServer(Ptr<Node> node, uint16_t port, Time stTime, Time ndTime) 
 {
   UdpServerHelper server (port);
   ApplicationContainer apps = server.Install (node);
-  apps.Start (Seconds (1.0));
-  apps.Stop (stopTime);
+  apps.Start (stTime);
+  apps.Stop (ndTime);
 }
 
-void InstallUdpClient(Ptr<Node> node, Address addr, uint16_t port, Time interval, uint32_t MaxPacketSize, uint32_t maxPacketCount)
+void InstallUdpClient(Ptr<Node> node, Address addr, uint16_t port, Time stTime, Time ndTime, Time interval, uint32_t MaxPacketSize, uint32_t maxPacketCount)
 {
   UdpClientHelper client (addr, port);
   client.SetAttribute ("MaxPackets", UintegerValue (maxPacketCount));
   client.SetAttribute ("Interval", TimeValue (interval));
   client.SetAttribute ("PacketSize", UintegerValue (MaxPacketSize));
   ApplicationContainer apps = client.Install (node);
-  apps.Start (Seconds (1.0));
-  apps.Stop (stopTime);
+  apps.Start (stTime);
+  apps.Stop (ndTime);
 }
 
 LosslessOnoffTable* globalOnoffTable;
@@ -212,6 +214,18 @@ void buildNetwork(std::string filename) {
  * ....
  * @param filename 
  */
+void ColdStart() {
+  int port_num = 0;
+  for (int i = 0; i < n; ++i) {
+    for (int j = 0; j < m; ++j) {
+      for (int k = 0; k < 2; ++k) {
+        ++port_num;
+        InstallUdpClient(nodes.Get (i), IPAddresses [j].GetAddress (k), port_num, ColdStartBegin, ColdStartBegin + Seconds(0.5), Seconds(1), 64, 64);
+      }
+    }
+  }
+}
+
 void installApps(std::string filename) {
   std::freopen(filename.c_str(), "r", stdin);
   int serverNum, clientNum;
@@ -220,7 +234,7 @@ void installApps(std::string filename) {
   for (int i=0; i<serverNum; i++){
     int nodenum, portnum;
     std::cin >> nodenum >> portnum;
-    InstallUdpServer(nodes.Get(nodenum), portnum);
+    InstallUdpServer(nodes.Get(nodenum), portnum, ColdStartEnd, stopTime);
   }
 
   std::cin >> clientNum;
@@ -229,9 +243,10 @@ void installApps(std::string filename) {
     double interval;
     int maxsize, maxcnt;
     std::cin >> clinode >> servChannelSeq >> servChannelEnd >> servport >> interval >> maxsize >> maxcnt;
-    InstallUdpClient(nodes.Get (clinode), IPAddresses [servChannelSeq].GetAddress (servChannelEnd), servport, Seconds(interval), maxsize, maxcnt);
+    InstallUdpClient(nodes.Get (clinode), IPAddresses [servChannelSeq].GetAddress (servChannelEnd), servport, ColdStartEnd, stopTime, MilliSeconds(interval), maxsize, maxcnt);
   }
 
+  std::cout << "??????????\n";
   return;
 }
 
@@ -287,7 +302,8 @@ int main (int argc, char *argv[])
   // Create dat to store packets dropped and marked at the router
   streamWrapper = asciiTraceHelper.CreateFileStream (dir + "/queueTraces/drop-0.dat");
   qd.Get (0)->TraceConnectWithoutContext ("Drop", MakeBoundCallback (&DropAtQueue, streamWrapper));
-
+  
+  ColdStart();
   installApps(appsFile);
   // Enable PCAP on all the point to point interfaces
   channelHelpers[0].EnablePcapAll (dir + "pcap/ns-3", true);
