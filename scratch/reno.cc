@@ -50,9 +50,9 @@
 
 using namespace ns3;
 std::string dir = "results/";
-Time stopTime = Seconds (50);
+Time stopTime = Seconds (12);
 Time ColdStartBegin = Seconds (1);
-Time ColdStartEnd = Seconds (20);
+Time ColdStartEnd = Seconds (10);
 //Time EventstopTime = Seconds (200);
 uint32_t segmentSize = 524;
 
@@ -243,9 +243,10 @@ void installApps(std::string filename) {
     double interval;
     int maxsize, maxcnt;
     std::cin >> clinode >> servChannelSeq >> servChannelEnd >> servport >> interval >> maxsize >> maxcnt;
-    InstallUdpClient(nodes.Get (clinode), IPAddresses [servChannelSeq].GetAddress (servChannelEnd), servport, ColdStartEnd, stopTime, Seconds(interval), maxsize, maxcnt);
+    InstallUdpClient(nodes.Get (clinode), IPAddresses [servChannelSeq].GetAddress (servChannelEnd), servport, ColdStartEnd, stopTime, MilliSeconds(interval), maxsize, maxcnt);
   }
 
+  std::cout << "??????????\n";
   return;
 }
 

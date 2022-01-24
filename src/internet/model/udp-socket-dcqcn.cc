@@ -80,13 +80,9 @@ UdpSocketDcqcn::GetTypeId (void)
                    MakeCallbackAccessor (&UdpSocketDcqcn::m_icmpCallback6),
                    MakeCallbackChecker ())
     .AddAttribute ("bps", "Default DataRate of the Socket",
-                DataRateValue (DataRate ("1Mb/s")),
+                DataRateValue (DataRate ("1Gb/s")),
                 MakeDataRateAccessor (&UdpSocketDcqcn::m_bps),
                 MakeDataRateChecker ())
-    .AddAttribute("QCNInterval", "The interval of generating QCN(MilliSeconds)",
-                DoubleValue(50.0),
-                MakeDoubleAccessor(&UdpSocketDcqcn::m_qcn_interval),
-                MakeDoubleChecker<double>())
 			.AddAttribute("ClampTargetRate",
 				"Clamp target rate.",
 				BooleanValue(false),
@@ -124,7 +120,7 @@ UdpSocketDcqcn::GetTypeId (void)
 				MakeDoubleChecker<double>())
 			.AddAttribute("MinRate",
 				"Minimum rate of a throttled flow",
-				DataRateValue(DataRate("100Mb/s")),
+				DataRateValue(DataRate("100b/s")),
 				MakeDataRateAccessor(&UdpSocketDcqcn::m_minRate),
 				MakeDataRateChecker())
 			.AddAttribute("ByteCounter",
@@ -1602,7 +1598,7 @@ UdpSocketDcqcn::CheckandSendQCN(Ipv4Address source, uint32_t port) {
 	}
   m_ecnbits = 0;
   m_qfb = m_total = 0;
-  Simulator::Schedule(MilliSeconds(m_qcn_interval), &UdpSocketDcqcn::CheckandSendQCN, this, source, port);
+  Simulator::Schedule(MicroSeconds(m_qcn_interval), &UdpSocketDcqcn::CheckandSendQCN, this, source, port);
 }
 
 void 
@@ -1709,6 +1705,7 @@ UdpSocketDcqcn::ForwardUp (Ptr<Packet> packet, Ipv4Header header, uint16_t port,
 			}
 		}
 		
+    std::cout << "(A)M_Rate="<<m_rate<<std::endl;
 		if (ecnbits & TCD_CONGESTED_BIT) { //这应该是QCN的一部分
 			rpr_cnm_received(0, qfb*1.0 / (total + 1)); //这是DCQCN的一部分，DCQCN的部分都要搬进来
 		}
@@ -1716,6 +1713,7 @@ UdpSocketDcqcn::ForwardUp (Ptr<Packet> packet, Ipv4Header header, uint16_t port,
 		m_rate = m_bps;
 		for (uint32_t j = 0; j < maxHop; j++)
 			m_rate = std::min(m_rate, m_rateAll[j]);
+    std::cout << "(B)M_Rate="<<m_rate<<std::endl;
     } 
 }
 
