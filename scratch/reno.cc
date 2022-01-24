@@ -137,8 +137,10 @@ CheckQueueSize (Ptr<QueueDisc> queue)
  * 
  */
 void buildNetwork(std::string filename) {
+  std::cout << "Network topology configurations:\n";
   std::freopen(filename.c_str(), "r", stdin);
   std::cin >> n >> m;
+  std::cout << n << " " << m << "\n";
   // Create nodes
   nodes.Create(n);
 
@@ -148,6 +150,7 @@ void buildNetwork(std::string filename) {
     std::cin >> x >> y;
     std::string DataRate, Delay, Address, Mask;
     std::cin >> DataRate >> Delay >> Address >> Mask;
+    std::cout << x << " " << y << " " << DataRate << " " << Delay << " " << Address << " " << Mask << "\n";
     // Create the point-to-point link helpers and connect two nodes
     PointToPointHelper p2ph;
     p2ph.SetDeviceAttribute    ("DataRate", StringValue (DataRate));
@@ -227,23 +230,29 @@ void ColdStart() {
  * @param filename 
  */
 void installApps(std::string filename) {
+  std::cout << "Application configurations:\n";
+  std::cout << filename << "\n";
   std::freopen(filename.c_str(), "r", stdin);
   int serverNum, clientNum;
   
   std::cin >> serverNum;  
+  std::cout << serverNum << "\n";
   std::cout << serverNum << std::endl;
   for (int i=0; i<serverNum; i++){
     int nodenum, portnum;
     std::cin >> nodenum >> portnum;
+    std::cout << nodenum << " " << portnum << "\n";
     InstallUdpServer(nodes.Get(nodenum), portnum, ColdStartEnd, stopTime);
   }
 
   std::cin >> clientNum;
+  std::cout << clientNum << "\n";
   for (int i=0; i<clientNum; i++){
     int clinode, servChannelSeq, servChannelEnd, servport;
     double interval;
     int maxsize, maxcnt;
     std::cin >> clinode >> servChannelSeq >> servChannelEnd >> servport >> interval >> maxsize >> maxcnt;
+    std::cout << clinode << " " << servChannelSeq << " " << servChannelEnd << " " << servport << " " << interval << " " << maxsize << " " << maxcnt << "\n";
     InstallUdpClient(nodes.Get (clinode), IPAddresses [servChannelSeq].GetAddress (servChannelEnd), servport, ColdStartEnd, stopTime, MilliSeconds(interval), maxsize, maxcnt);
   }
 
