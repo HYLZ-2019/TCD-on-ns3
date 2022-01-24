@@ -82,7 +82,7 @@ UdpSocketDcqcn::GetTypeId (void)
                 DataRateValue (DataRate ("1Mb/s")),
                 MakeDataRateAccessor (&UdpSocketDcqcn::m_bps),
                 MakeDataRateChecker ())
-    .AddAttribute("QCNInterval", "The interval of generating QCN",
+    .AddAttribute("QCNInterval", "The interval of generating QCN(MilliSeconds)",
                 DoubleValue(50.0),
                 MakeDoubleAccessor(&UdpSocketDcqcn::m_qcn_interval),
                 MakeDoubleChecker<double>())
@@ -1524,31 +1524,39 @@ UdpSocketDcqcn::BindToNetDevice (Ptr<NetDevice> netdevice)
 
 void
 UdpSocketDcqcn::CheckandSendQCN(Ipv4Address source, uint32_t port) {
+  if (m_total != 0) {  
+    std::cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n";
+    std::cout <<"At Time <" << Simulator::Now ().GetSeconds () << ">, CheckandSendQCN() is called. The socketID is "<< m_socketID<<"\n";
+    std::cout << "m_ecnbits = [" << (int)m_ecnbits << "], m_qfb = [" << m_qfb << "], m_total = [" << m_total << "].\n";
+    std::cout << "--------------------------------------------------------------------------------------------\n";
+  }
   bool iscongested = (m_ecnbits & (TCD_CONGESTED_BIT | TCD_UNDETERMINED_BIT));
   if (iscongested) {
 			//构造一个QCN包发出去, 发这个QCN包不受Traffic Control限制
-			Ptr<Packet> p; 
+			Ptr<Packet> p = new Packet(0); 
 			MyTag qcnTag;
-			qcnTag.SetSimpleValue (TCD_QCN_BIT | m_ecnbits);
+			qcnTag.SetSimpleValue (((uint64_t)m_total << 48) | ((uint64_t)m_qfb << 32) | ((uint64_t)m_ecnbits << 16) | TCD_QCN_BIT);
 			p -> AddPacketTag(qcnTag);
 			//参数需要编
-			DoSendTo (p, source, port);
+			DoSendTo (p, source, port, GetIpTos ());
+      std::cout << qcnTag.GetSimpleValue() << std::endl;
 			//DoSendTo就直接发包了 m_udp -> Send (p->Copy (), addri, dest, m_endPoint->GetLocalPort (), port);
 	}
   m_ecnbits = 0;
   m_qfb = m_total = 0;
-  Simulator::Schedule(MicroSeconds(m_qcn_interval), &UdpSocketDcqcn::CheckandSendQCN, this, source, port);
+  Simulator::Schedule(MilliSeconds(m_qcn_interval), &UdpSocketDcqcn::CheckandSendQCN, this, source, port);
 }
 
 void 
 UdpSocketDcqcn::ForwardUp (Ptr<Packet> packet, Ipv4Header header, uint16_t port,
                           Ptr<Ipv4Interface> incomingInterface)
 {
-	static int num = 0; ++num;
-  std::cout << "#############The ["<< num << "]th of ForwardUp.\n";
+  std::cout << "----------------------------------------------------------------------\n";
+  static int num = 0; ++num;
+  std::cout <<"At Time <" << Simulator::Now ().GetSeconds () << ">, the {" << num << "}th of UdpSocketDcqcn::ForwardUp; The socketID is "<< m_socketID<<"\n";
+  std::cout << "packet=[" << packet << "], header=[" << header << "], port=[" << port << "].\n";
+ 
 	NS_LOG_FUNCTION (this << packet << header << port);
-  std::cout <<"At Time <" << Simulator::Now ().GetSeconds () << ">, socketID="<< m_socketID<<", DCQCN::ForwardUp() is called.\n";
-  std::cout << "ForwardUp header=[" << header << "], port=[" << port << "].\n";
 	if (m_shutdownRecv) {
 		return;
 	}
@@ -1590,9 +1598,11 @@ UdpSocketDcqcn::ForwardUp (Ptr<Packet> packet, Ipv4Header header, uint16_t port,
 	//QCN对应simple value的值是4的情况
 	MyTag myTag;
 	packet -> RemovePacketTag(myTag);
-	uint8_t simpleValue = myTag.GetSimpleValue();
+	uint64_t simpleValue = myTag.GetSimpleValue();
 	
-  std::cout << "#############with Tag ["<< (uint)simpleValue << "] on the packet.\n";
+  std::cout << "with Tag ["<< (uint)simpleValue << "] on the packet.\n";
+
+  std::cout << "----------------------------------------------------------------------\n";
 	bool isQCN = ((simpleValue & TCD_QCN_BIT) != 0);
 	if(!isQCN) { //如果是数据包
 		//收包
@@ -1607,18 +1617,19 @@ UdpSocketDcqcn::ForwardUp (Ptr<Packet> packet, Ipv4Header header, uint16_t port,
 		//检查packet,如果有拥塞标记就往回发QCN,标记怎么打还没确定,要和TCLayer一致
 		//对应qddnetdevice里的CheckandSendQCN()
     
-    uint16_t ecnbits = (simpleValue & TCD_ECN_MASK);
+    uint8_t myecnbits = (simpleValue & TCD_ECN_MASK);
 		// The 3 bits represent whether a packet has gone through CONG/UNDET/NONCON queues.
-    if (m_ecnbits == -1) {
-      m_ecnbits = ecnbits;
-      m_qfb = (ecnbits != 0 ? 1 : 0);
+    std::cout << (int)((int8_t)m_ecnbits) << std::endl;
+    if ((int8_t)m_ecnbits == -1) {
+      m_ecnbits = myecnbits;
+      m_qfb = (myecnbits != 0 ? 1 : 0);
       m_total = 1;
 			Ipv4Address ipv4 = header.GetSource();
       CheckandSendQCN(ipv4, port);
     }
 		else {
-      m_ecnbits |= ecnbits;
-      m_qfb += (ecnbits != 0 ? 1 : 0);
+      m_ecnbits |= myecnbits;
+      m_qfb += (myecnbits != 0 ? 1 : 0);
       m_total++;
     }
 	}
@@ -1627,10 +1638,11 @@ UdpSocketDcqcn::ForwardUp (Ptr<Packet> packet, Ipv4Header header, uint16_t port,
       // Then, extract data from the congestion packet.
       // We assume, without verify, the packet is destinated to me
 		
-		//从包里抽出ecnbits
-		//TODO: ecnbits;
-		uint16_t ecnbits = simpleValue & 3;
-	  
+		//从包里抽出m_total & m_qfb
+    uint8_t ecnbits = ((simpleValue >> 16) & TCD_ECN_MASK);
+    uint16_t qfb = ((simpleValue >> 32) & MASK);
+    uint16_t total = ((simpleValue >> 48) & MASK);
+    std::cout << "ecnbits="<< (int)ecnbits << ", qfb=" << qfb << ", total="<<total << std::endl;
 		if (m_rate == 0) { //lazy initialization	
 			m_rate = m_bps;
 			for (uint32_t j = 0; j < maxHop; j++) {
@@ -1639,8 +1651,8 @@ UdpSocketDcqcn::ForwardUp (Ptr<Packet> packet, Ipv4Header header, uint16_t port,
 			}
 		}
 		
-		if (ecnbits == 0x03) { //这应该是QCN的一部分
-			rpr_cnm_received(0, m_qfb*1.0 / (m_total + 1)); //这是DCQCN的一部分，DCQCN的部分都要搬进来
+		if (ecnbits & TCD_CONGESTED_BIT) { //这应该是QCN的一部分
+			rpr_cnm_received(0, qfb*1.0 / (total + 1)); //这是DCQCN的一部分，DCQCN的部分都要搬进来
 		}
 
 		m_rate = m_bps;
@@ -1809,7 +1821,7 @@ MyTag::GetTypeId (void)
                    "A simple value",
                    EmptyAttributeValue (),
                    MakeUintegerAccessor (&MyTag::GetSimpleValue),
-                   MakeUintegerChecker<uint8_t> ())
+                   MakeUintegerChecker<uint64_t> ())
   ;
   return tid;
 }
@@ -1821,17 +1833,17 @@ MyTag::GetInstanceTypeId (void) const
 uint32_t 
 MyTag::GetSerializedSize (void) const
 {
-  return 1;
+  return 8;
 }
 void 
 MyTag::Serialize (TagBuffer i) const
 {
-  i.WriteU8 (m_simpleValue);
+  i.WriteU64 (m_simpleValue);
 }
 void 
 MyTag::Deserialize (TagBuffer i)
 {
-  m_simpleValue = i.ReadU8 ();
+  m_simpleValue = i.ReadU64 ();
 }
 void 
 MyTag::Print (std::ostream &os) const
@@ -1839,11 +1851,11 @@ MyTag::Print (std::ostream &os) const
   os << "v=" << (uint32_t)m_simpleValue << "[TCD_CONGESTED="<<!!(m_simpleValue & TCD_CONGESTED_BIT) << ", TCD_UNDETERMINED="<<!!(m_simpleValue & TCD_UNDETERMINED_BIT)<<", TCD_NONCONGESTED="<<!!(m_simpleValue & TCD_NONCONGESTED_BIT)<<"]";
 }
 void 
-MyTag::SetSimpleValue (uint8_t value)
+MyTag::SetSimpleValue (uint64_t value)
 {
   m_simpleValue = value;
 }
-uint8_t 
+uint64_t 
 MyTag::GetSimpleValue (void) const
 {
   return m_simpleValue;
