@@ -190,6 +190,18 @@ void buildNetwork(std::string filename) {
 }
 
 
+void ColdStart() {
+  int port_num = 0;
+  for (int i = 0; i < n; ++i) {
+    for (int j = 0; j < m; ++j) {
+      for (int k = 0; k < 2; ++k) {
+        ++port_num;
+        InstallUdpClient(nodes.Get (i), IPAddresses [j].GetAddress (k), port_num, ColdStartBegin, ColdStartBegin + Seconds(0.5), Seconds(1), 64, 64);
+      }
+    }
+  }
+}
+
 /**
  * @brief Install UDP clients and servers according to the input file.
  * File format:
@@ -214,23 +226,12 @@ void buildNetwork(std::string filename) {
  * ....
  * @param filename 
  */
-void ColdStart() {
-  int port_num = 0;
-  for (int i = 0; i < n; ++i) {
-    for (int j = 0; j < m; ++j) {
-      for (int k = 0; k < 2; ++k) {
-        ++port_num;
-        InstallUdpClient(nodes.Get (i), IPAddresses [j].GetAddress (k), port_num, ColdStartBegin, ColdStartBegin + Seconds(0.5), Seconds(1), 64, 64);
-      }
-    }
-  }
-}
-
 void installApps(std::string filename) {
   std::freopen(filename.c_str(), "r", stdin);
   int serverNum, clientNum;
   
   std::cin >> serverNum;  
+  std::cout << serverNum << std::endl;
   for (int i=0; i<serverNum; i++){
     int nodenum, portnum;
     std::cin >> nodenum >> portnum;
