@@ -1535,12 +1535,13 @@ UdpSocketDcqcn::BindToNetDevice (Ptr<NetDevice> netdevice)
 
 void
 UdpSocketDcqcn::CheckandSendQCN(Ipv4Address source, uint32_t port) {
-  if (m_total != 0) {  
-    //std::cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n";
-    //std::cout <<"At Time <" << Simulator::Now ().GetSeconds () << ">, CheckandSendQCN() is called. The socketID is "<< m_socketID<<"\n";
-    //std::cout << "m_ecnbits = [" << (int)m_ecnbits << "], m_qfb = [" << m_qfb << "], m_total = [" << m_total << "].\n";
-    //std::cout << "--------------------------------------------------------------------------------------------\n";
-  }
+  //                      +-----------------+---------------+---------------------+---------------------+
+  //SimpleValue(64bits) = | m_total(16bits) | m_qfb(16bits) | 0000 0000 m_ecnbits | 0000 0000 0000 xyzw |
+  //                      +-----------------+---------------+---------------------+---------------------+
+  //x -> TCD_QCN_BIT
+  //y -> TCD_CONGESTED_BIT 
+  //z -> TCD_UNDETERMINED_BIT  
+  //w -> TCD_NONCONGESTED_BIT 
   bool iscongested = (m_ecnbits & (TCD_CONGESTED_BIT | TCD_UNDETERMINED_BIT));
   if (iscongested) {
 			//构造一个QCN包发出去, 发这个QCN包不受Traffic Control限制
