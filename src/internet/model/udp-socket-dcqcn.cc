@@ -1535,6 +1535,7 @@ UdpSocketDcqcn::BindToNetDevice (Ptr<NetDevice> netdevice)
 
 void
 UdpSocketDcqcn::CheckandSendQCN(Ipv4Address source, uint32_t port) {
+  //m_total, m_qfb, m_ecnbits will be used by sender to control the TxRate(different from the sender's)
   //                      +-----------------+---------------+---------------------+---------------------+
   //SimpleValue(64bits) = | m_total(16bits) | m_qfb(16bits) | 0000 0000 m_ecnbits | 0000 0000 0000 xyzw |
   //                      +-----------------+---------------+---------------------+---------------------+
