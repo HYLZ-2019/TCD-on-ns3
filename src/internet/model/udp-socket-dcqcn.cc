@@ -26,6 +26,7 @@
 #include "ns3/log.h"
 #include "ns3/node.h"
 #include "ns3/double.h"
+#include "ns3/boolean.h"
 #include "ns3/inet-socket-address.h"
 #include "ns3/inet6-socket-address.h"
 #include "ns3/ipv4-route.h"
@@ -86,6 +87,61 @@ UdpSocketDcqcn::GetTypeId (void)
                 DoubleValue(50.0),
                 MakeDoubleAccessor(&UdpSocketDcqcn::m_qcn_interval),
                 MakeDoubleChecker<double>())
+			.AddAttribute("ClampTargetRate",
+				"Clamp target rate.",
+				BooleanValue(false),
+				MakeBooleanAccessor(&UdpSocketDcqcn::m_EcnClampTgtRate),
+				MakeBooleanChecker())
+			.AddAttribute("ClampTargetRateAfterTimeInc",
+				"Clamp target rate after timer increase.",
+				BooleanValue(false),
+				MakeBooleanAccessor(&UdpSocketDcqcn::m_EcnClampTgtRateAfterTimeInc),
+				MakeBooleanChecker())
+			.AddAttribute("CNPInterval",
+				"The interval of generating CNP",
+				DoubleValue(50.0),
+				MakeDoubleAccessor(&UdpSocketDcqcn::m_qcn_interval),
+				MakeDoubleChecker<double>())
+			.AddAttribute("AlphaResumInterval",
+				"The interval of resuming alpha",
+				DoubleValue(55.0),
+				MakeDoubleAccessor(&UdpSocketDcqcn::m_alpha_resume_interval),
+				MakeDoubleChecker<double>())
+			.AddAttribute("RPTimer",
+				"The rate increase timer at RP in microseconds",
+				DoubleValue(1500.0),
+				MakeDoubleAccessor(&UdpSocketDcqcn::m_rpgTimeReset),
+				MakeDoubleChecker<double>())
+			.AddAttribute("FastRecoveryTimes",
+				"The rate increase timer at RP",
+				UintegerValue(5),
+				MakeUintegerAccessor(&UdpSocketDcqcn::m_rpgThreshold),
+				MakeUintegerChecker<uint32_t>())
+			.AddAttribute("DCTCPGain",
+				"Control gain parameter which determines the level of rate decrease",
+				DoubleValue(1.0 / 16),
+				MakeDoubleAccessor(&UdpSocketDcqcn::m_g),
+				MakeDoubleChecker<double>())
+			.AddAttribute("MinRate",
+				"Minimum rate of a throttled flow",
+				DataRateValue(DataRate("100Mb/s")),
+				MakeDataRateAccessor(&UdpSocketDcqcn::m_minRate),
+				MakeDataRateChecker())
+			.AddAttribute("ByteCounter",
+				"Byte counter constant for increment process.",
+				UintegerValue(150000),
+				MakeUintegerAccessor(&UdpSocketDcqcn::m_bc),
+				MakeUintegerChecker<uint32_t>())
+			.AddAttribute("RateAI",
+				"Rate increment unit in AI period",
+				DataRateValue(DataRate("5Mb/s")),
+				MakeDataRateAccessor(&UdpSocketDcqcn::m_rai),
+				MakeDataRateChecker())
+			.AddAttribute("RateHAI",
+				"Rate increment unit in hyperactive AI period",
+				DataRateValue(DataRate("50Mb/s")),
+				MakeDataRateAccessor(&UdpSocketDcqcn::m_rhai),
+				MakeDataRateChecker())
   ;
   return tid;
 }
@@ -712,6 +768,8 @@ UdpSocketDcqcn::TransmitStart(Ptr<Packet> p) {
 				m_txBytes[hop] = m_bc;
 			}
 		}
+
+    std::cout << "call rpr_cnm_received with m_alpha_resume_interval="<<m_alpha_resume_interval<<std::endl;
 		m_rpByteStage[hop] = 0;
 		m_rpTimeStage[hop] = 0;
 		//m_alpha[findex][hop] = (1-m_g)*m_alpha[findex][hop] + m_g*fraction;
