@@ -1,0 +1,308 @@
+[1mdiff --git a/scratch/apps.txt b/scratch/apps.txt[m
+[1mindex 3ad997d..473b82c 100644[m
+[1m--- a/scratch/apps.txt[m
+[1m+++ b/scratch/apps.txt[m
+[36m@@ -1,4 +1,4 @@[m
+ 1[m
+ 1 50000[m
+ 1[m
+[31m-0 0 1 50000 50 102400 320[m
+[32m+[m[32m0 0 1 50000 50 1024 320[m
+[1mdiff --git a/scratch/apps_fig2.txt b/scratch/apps_fig2.txt[m
+[1mindex f070eea..3784727 100644[m
+[1m--- a/scratch/apps_fig2.txt[m
+[1m+++ b/scratch/apps_fig2.txt[m
+[36m@@ -1,6 +1,4 @@[m
+[31m-2[m
+[32m+[m[32m1[m[41m[m
+ 7 50000[m
+[31m-8 50000[m
+[31m-2[m
+[31m-0 7 1 50000 0.50 1024 320[m
+[31m-2 8 1 50000 0.50 1024 320[m
+\ No newline at end of file[m
+[32m+[m[32m1[m[41m[m
+[32m+[m[32m0 6 1 50000 0.50 1024 320[m
+\ No newline at end of file[m
+[1mdiff --git a/scratch/reno.cc b/scratch/reno.cc[m
+[1mindex ee7fef7..1788e45 100644[m
+[1m--- a/scratch/reno.cc[m
+[1m+++ b/scratch/reno.cc[m
+[36m@@ -137,8 +137,10 @@[m [mCheckQueueSize (Ptr<QueueDisc> queue)[m
+  * [m
+  */[m
+ void buildNetwork(std::string filename) {[m
+[32m+[m[32m  std::cout << "Network topology configurations:\n";[m
+   std::freopen(filename.c_str(), "r", stdin);[m
+   std::cin >> n >> m;[m
+[32m+[m[32m  std::cout << n << " " << m << "\n";[m
+   // Create nodes[m
+   nodes.Create(n);[m
+ [m
+[36m@@ -148,6 +150,7 @@[m [mvoid buildNetwork(std::string filename) {[m
+     std::cin >> x >> y;[m
+     std::string DataRate, Delay, Address, Mask;[m
+     std::cin >> DataRate >> Delay >> Address >> Mask;[m
+[32m+[m[32m    std::cout << x << " " << y << " " << DataRate << " " << Delay << " " << Address << " " << Mask << "\n";[m
+     // Create the point-to-point link helpers and connect two nodes[m
+     PointToPointHelper p2ph;[m
+     p2ph.SetDeviceAttribute    ("DataRate", StringValue (DataRate));[m
+[36m@@ -190,6 +193,19 @@[m [mvoid buildNetwork(std::string filename) {[m
+ }[m
+ [m
+ [m
+[32m+[m
+[32m+[m[32mvoid ColdStart() {[m
+[32m+[m[32m  int port_num = 0;[m
+[32m+[m[32m  for (int i = 0; i < n; ++i) {[m
+[32m+[m[32m    for (int j = 0; j < m; ++j) {[m
+[32m+[m[32m      for (int k = 0; k < 2; ++k) {[m
+[32m+[m[32m        ++port_num;[m
+[32m+[m[32m        InstallUdpClient(nodes.Get (i), IPAddresses [j].GetAddress (k), port_num, ColdStartBegin, ColdStartBegin + Seconds(0.5), Seconds(1), 64, 64);[m
+[32m+[m[32m      }[m
+[32m+[m[32m    }[m
+[32m+[m[32m  }[m
+[32m+[m[32m}[m
+[32m+[m
+ /**[m
+  * @brief Install UDP clients and servers according to the input file.[m
+  * File format:[m
+[36m@@ -214,39 +230,33 @@[m [mvoid buildNetwork(std::string filename) {[m
+  * ....[m
+  * @param filename [m
+  */[m
+[31m-void ColdStart() {[m
+[31m-  int port_num = 0;[m
+[31m-  for (int i = 0; i < n; ++i) {[m
+[31m-    for (int j = 0; j < m; ++j) {[m
+[31m-      for (int k = 0; k < 2; ++k) {[m
+[31m-        ++port_num;[m
+[31m-        InstallUdpClient(nodes.Get (i), IPAddresses [j].GetAddress (k), port_num, ColdStartBegin, ColdStartBegin + Seconds(0.5), Seconds(1), 64, 64);[m
+[31m-      }[m
+[31m-    }[m
+[31m-  }[m
+[31m-}[m
+[31m-[m
+ void installApps(std::string filename) {[m
+[32m+[m[32m  std::cout << "Application configurations:\n";[m
+[32m+[m[32m  std::cout << filename << "\n";[m
+   std::freopen(filename.c_str(), "r", stdin);[m
+   int serverNum, clientNum;[m
+   [m
+[31m-  std::cin >> serverNum;  [m
+[32m+[m[32m  std::cin >> serverNum;[m
+[32m+[m[32m  std::cout << serverNum << "\n";[m[41m  [m
+   for (int i=0; i<serverNum; i++){[m
+     int nodenum, portnum;[m
+     std::cin >> nodenum >> portnum;[m
+[32m+[m[32m    std::cout << nodenum << " " << portnum << "\n";[m
+     InstallUdpServer(nodes.Get(nodenum), portnum, ColdStartEnd, stopTime);[m
+   }[m
+ [m
+   std::cin >> clientNum;[m
+[32m+[m[32m  std::cout << clientNum << "\n";[m
+   for (int i=0; i<clientNum; i++){[m
+     int clinode, servChannelSeq, servChannelEnd, servport;[m
+     double interval;[m
+     int maxsize, maxcnt;[m
+     std::cin >> clinode >> servChannelSeq >> servChannelEnd >> servport >> interval >> maxsize >> maxcnt;[m
+[32m+[m[32m    std::cout << clinode << " " << servChannelSeq << " " << servChannelEnd << " " << servport << " " << interval << " " << maxsize << " " << maxcnt << "\n";[m
+     InstallUdpClient(nodes.Get (clinode), IPAddresses [servChannelSeq].GetAddress (servChannelEnd), servport, ColdStartEnd, stopTime, MilliSeconds(interval), maxsize, maxcnt);[m
+   }[m
+ [m
+[31m-  std::cout << "??????????\n";[m
+[32m+[m[32m  //std::cout << "??????????\n";[m
+   return;[m
+ }[m
+ [m
+[36m@@ -290,7 +300,7 @@[m [mint main (int argc, char *argv[])[m
+   NS_ASSERT_MSG (retVal == 0, "Error in return value");[m
+ [m
+   NS_UNUSED (retVal);[m
+[31m-[m
+[32m+[m[32m  std::cout << "before buildNetwork\n";[m
+   buildNetwork(topologyFile);[m
+ [m
+   // Calls function to check queue size[m
+[36m@@ -302,8 +312,8 @@[m [mint main (int argc, char *argv[])[m
+   // Create dat to store packets dropped and marked at the router[m
+   streamWrapper = asciiTraceHelper.CreateFileStream (dir + "/queueTraces/drop-0.dat");[m
+   qd.Get (0)->TraceConnectWithoutContext ("Drop", MakeBoundCallback (&DropAtQueue, streamWrapper));[m
+[31m-  [m
+[31m-  ColdStart();[m
+[32m+[m[32m  std::cout << "before installApps\n";[m
+[32m+[m[32m  //ColdStart();[m
+   installApps(appsFile);[m
+   // Enable PCAP on all the point to point interfaces[m
+   channelHelpers[0].EnablePcapAll (dir + "pcap/ns-3", true);[m
+[1mdiff --git a/src/internet/model/udp-socket-dcqcn.cc b/src/internet/model/udp-socket-dcqcn.cc[m
+[1mindex 68adfc5..0ccd12d 100644[m
+[1m--- a/src/internet/model/udp-socket-dcqcn.cc[m
+[1m+++ b/src/internet/model/udp-socket-dcqcn.cc[m
+[36m@@ -868,7 +868,7 @@[m [mUdpSocketDcqcn::DequeueAndTransmit(void) {[m
+ [m
+ int UdpSocketDcqcn::wrapDoSendTo(Ptr<Packet> p, Ipv4Address dest, uint16_t port, uint8_t tos) {[m
+ [m
+[31m-  std::cout <<"At Time <" << Simulator::Now ().GetSeconds () << ">, wrapDoSendTo: packet=[" << p << "], dest=[" << dest << "], port=[" << port << "].\n";[m
+[32m+[m[32m  //std::cout <<"At Time <" << Simulator::Now ().GetSeconds () << ">, wrapDoSendTo: packet=[" << p << "], dest=[" << dest << "], port=[" << port << "].\n";[m
+ 	m_sendingBuffer.push(BufferItem(p, dest, port, tos)); //TODO:定义一下类型[m
+ 	[m
+ 	DequeueAndTransmit();[m
+[36m@@ -879,8 +879,8 @@[m [mint[m
+ UdpSocketDcqcn::DoSendTo (Ptr<Packet> p, Ipv4Address dest, uint16_t port, uint8_t tos)[m
+ {[m
+   static int num = 0; ++num;[m
+[31m-  std::cout << "*************the [" << num <<"]th of ipv4DoSendTo() with tos is called\n";[m
+[31m-  std::cout <<"At Time <" << Simulator::Now ().GetSeconds () << ">, DoSendTo: packet=[" << p << "], dest=[" << dest << "], port=[" << port << "].\n";[m
+[32m+[m[32m  //std::cout << "*************the [" << num <<"]th of ipv4DoSendTo() with tos is called\n";[m
+[32m+[m[32m  //std::cout <<"At Time <" << Simulator::Now ().GetSeconds () << ">, DoSendTo: packet=[" << p << "], dest=[" << dest << "], port=[" << port << "].\n";[m
+  [m
+   NS_LOG_FUNCTION (this << p << dest << port << (uint16_t) tos);[m
+   if (m_boundnetdevice)[m
+[36m@@ -1061,8 +1061,8 @@[m [mUdpSocketDcqcn::DoSendTo (Ptr<Packet> p, Ipv4Address dest, uint16_t port, uint8_[m
+ int[m
+ UdpSocketDcqcn::DoSendTo (Ptr<Packet> p, Ipv4Address dest, uint16_t port)[m
+ {[m
+[31m-  std::cout << "DoSendTo Ipv4 without tos\n";[m
+[31m-  std::cout <<"At Time <" << Simulator::Now ().GetSeconds () << ">, DoSendTo: packet=[" << p << "], dest=[" << dest << "], port=[" << port << "].\n";[m
+[32m+[m[32m  //std::cout << "DoSendTo Ipv4 without tos\n";[m
+[32m+[m[32m  //std::cout <<"At Time <" << Simulator::Now ().GetSeconds () << ">, DoSendTo: packet=[" << p << "], dest=[" << dest << "], port=[" << port << "].\n";[m
+   NS_LOG_FUNCTION (this << p << dest << port);[m
+   if (m_boundnetdevice)[m
+     {[m
+[36m@@ -1579,10 +1579,10 @@[m [mUdpSocketDcqcn::BindToNetDevice (Ptr<NetDevice> netdevice)[m
+ void[m
+ UdpSocketDcqcn::CheckandSendQCN(Ipv4Address source, uint32_t port) {[m
+   if (m_total != 0) {  [m
+[31m-    std::cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n";[m
+[31m-    std::cout <<"At Time <" << Simulator::Now ().GetSeconds () << ">, CheckandSendQCN() is called. The socketID is "<< m_socketID<<"\n";[m
+[31m-    std::cout << "m_ecnbits = [" << (int)m_ecnbits << "], m_qfb = [" << m_qfb << "], m_total = [" << m_total << "].\n";[m
+[31m-    std::cout << "--------------------------------------------------------------------------------------------\n";[m
+[32m+[m[32m    //std::cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n";[m
+[32m+[m[32m    //std::cout <<"At Time <" << Simulator::Now ().GetSeconds () << ">, CheckandSendQCN() is called. The socketID is "<< m_socketID<<"\n";[m
+[32m+[m[32m    //std::cout << "m_ecnbits = [" << (int)m_ecnbits << "], m_qfb = [" << m_qfb << "], m_total = [" << m_total << "].\n";[m
+[32m+[m[32m    //std::cout << "--------------------------------------------------------------------------------------------\n";[m
+   }[m
+   bool iscongested = (m_ecnbits & (TCD_CONGESTED_BIT | TCD_UNDETERMINED_BIT));[m
+   if (iscongested) {[m
+[36m@@ -1593,7 +1593,7 @@[m [mUdpSocketDcqcn::CheckandSendQCN(Ipv4Address source, uint32_t port) {[m
+ 			p -> AddPacketTag(qcnTag);[m
+ 			//参数需要编[m
+ 			DoSendTo (p, source, port, GetIpTos ());[m
+[31m-      std::cout << qcnTag.GetSimpleValue() << std::endl;[m
+[32m+[m[32m      //std::cout << qcnTag.GetSimpleValue() << std::endl;[m
+ 			//DoSendTo就直接发包了 m_udp -> Send (p->Copy (), addri, dest, m_endPoint->GetLocalPort (), port);[m
+ 	}[m
+   m_ecnbits = 0;[m
+[36m@@ -1605,10 +1605,10 @@[m [mvoid[m
+ UdpSocketDcqcn::ForwardUp (Ptr<Packet> packet, Ipv4Header header, uint16_t port,[m
+                           Ptr<Ipv4Interface> incomingInterface)[m
+ {[m
+[31m-  std::cout << "----------------------------------------------------------------------\n";[m
+[32m+[m[32m  //std::cout << "----------------------------------------------------------------------\n";[m
+   static int num = 0; ++num;[m
+[31m-  std::cout <<"At Time <" << Simulator::Now ().GetSeconds () << ">, the {" << num << "}th of UdpSocketDcqcn::ForwardUp; The socketID is "<< m_socketID<<"\n";[m
+[31m-  std::cout << "packet=[" << packet << "], header=[" << header << "], port=[" << port << "].\n";[m
+[32m+[m[32m  //std::cout <<"At Time <" << Simulator::Now ().GetSeconds () << ">, the {" << num << "}th of UdpSocketDcqcn::ForwardUp; The socketID is "<< m_socketID<<"\n";[m
+[32m+[m[32m  //std::cout << "packet=[" << packet << "], header=[" << header << "], port=[" << port << "].\n";[m
+  [m
+ 	NS_LOG_FUNCTION (this << packet << header << port);[m
+ 	if (m_shutdownRecv) {[m
+[36m@@ -1654,9 +1654,9 @@[m [mUdpSocketDcqcn::ForwardUp (Ptr<Packet> packet, Ipv4Header header, uint16_t port,[m
+ 	packet -> RemovePacketTag(myTag);[m
+ 	uint64_t simpleValue = myTag.GetSimpleValue();[m
+ 	[m
+[31m-  std::cout << "with Tag ["<< (uint)simpleValue << "] on the packet.\n";[m
+[32m+[m[32m  //std::cout << "with Tag ["<< (uint)simpleValue << "] on the packet.\n";[m
+ [m
+[31m-  std::cout << "----------------------------------------------------------------------\n";[m
+[32m+[m[32m  //std::cout << "----------------------------------------------------------------------\n";[m
+ 	bool isQCN = ((simpleValue & TCD_QCN_BIT) != 0);[m
+ 	if(!isQCN) { //如果是数据包[m
+ 		//收包[m
+[36m@@ -1673,7 +1673,7 @@[m [mUdpSocketDcqcn::ForwardUp (Ptr<Packet> packet, Ipv4Header header, uint16_t port,[m
+     [m
+     uint8_t myecnbits = (simpleValue & TCD_ECN_MASK);[m
+ 		// The 3 bits represent whether a packet has gone through CONG/UNDET/NONCON queues.[m
+[31m-    std::cout << (int)((int8_t)m_ecnbits) << std::endl;[m
+[32m+[m[32m    //std::cout << (int)((int8_t)m_ecnbits) << std::endl;[m
+     if ((int8_t)m_ecnbits == -1) {[m
+       m_ecnbits = myecnbits;[m
+       m_qfb = (myecnbits != 0 ? 1 : 0);[m
+[36m@@ -1696,7 +1696,7 @@[m [mUdpSocketDcqcn::ForwardUp (Ptr<Packet> packet, Ipv4Header header, uint16_t port,[m
+     uint8_t ecnbits = ((simpleValue >> 16) & TCD_ECN_MASK);[m
+     uint16_t qfb = ((simpleValue >> 32) & MASK);[m
+     uint16_t total = ((simpleValue >> 48) & MASK);[m
+[31m-    std::cout << "ecnbits="<< (int)ecnbits << ", qfb=" << qfb << ", total="<<total << std::endl;[m
+[32m+[m[32m    //std::cout << "ecnbits="<< (int)ecnbits << ", qfb=" << qfb << ", total="<<total << std::endl;[m
+ 		if (m_rate == 0) { //lazy initialization	[m
+ 			m_rate = m_bps;[m
+ 			for (uint32_t j = 0; j < maxHop; j++) {[m
+[36m@@ -1705,7 +1705,7 @@[m [mUdpSocketDcqcn::ForwardUp (Ptr<Packet> packet, Ipv4Header header, uint16_t port,[m
+ 			}[m
+ 		}[m
+ 		[m
+[31m-    std::cout << "(A)M_Rate="<<m_rate<<std::endl;[m
+[32m+[m[32m    //std::cout << "(A)M_Rate="<<m_rate<<std::endl;[m
+ 		if (ecnbits & TCD_CONGESTED_BIT) { //这应该是QCN的一部分[m
+ 			rpr_cnm_received(0, qfb*1.0 / (total + 1)); //这是DCQCN的一部分，DCQCN的部分都要搬进来[m
+ 		}[m
+[1mdiff --git a/src/traffic-control/model/lossless-queue-disc.cc b/src/traffic-control/model/lossless-queue-disc.cc[m
+[1mindex 6b133c6..1bdb231 100755[m
+[1m--- a/src/traffic-control/model/lossless-queue-disc.cc[m
+[1m+++ b/src/traffic-control/model/lossless-queue-disc.cc[m
+[36m@@ -208,8 +208,8 @@[m [mLosslessQueueDisc::DoDequeue (void)[m
+ [m
+   TcdState curTCD = getCurrentTCD();[m
+   static int num = 0; ++num;[m
+[31m-  std::cout <<"At Time <" << Simulator::Now ().GetSeconds () << ">, the {" << num << "}th of DoDequeue: packet=[" << pk<< "], "[m
+[31m-            << "current TCD state is " << tcdStateName(curTCD) << ", length of queue is " << GetCurrentSize() << ".";[m
+[32m+[m[32m  //std::cout <<"At Time <" << Simulator::Now ().GetSeconds () << ">, the {" << num << "}th of DoDequeue: packet=[" << pk<< "], "[m
+[32m+[m[32m            //<< "current TCD state is " << tcdStateName(curTCD) << ", length of queue is " << GetCurrentSize() << ".";[m
+ [m
+   switch (curTCD){[m
+     case TcdState::TCD_CONGESTION:[m
+[36m@@ -293,7 +293,7 @@[m [mvoid LosslessQueueDisc::reportOutputClear(){[m
+ }[m
+ [m
+ void LosslessQueueDisc::reportOutputBlocked(){[m
+[31m-  std::cout << "LosslessQueueDisc " << this << " : A packet was blocked.\n";[m
+[32m+[m[32m  //std::cout << "LosslessQueueDisc " << this << " : A packet was blocked.\n";[m
+   m_qState = TcdQueueState::TCD_BLOCKED;[m
+ }[m
+ [m
+[36m@@ -301,7 +301,7 @@[m [mTcdState LosslessQueueDisc::getCurrentTCD(){[m
+   TcdState newState = m_laststate;[m
+ [m
+   if (m_qState == TcdQueueState::TCD_BLOCKED){[m
+[31m-    std::cout << "ERROR! This algorithm is only right when the queue is CLEAR!\n";[m
+[32m+[m[32m    //std::cout << "ERROR! This algorithm is only right when the queue is CLEAR!\n";[m
+   }[m
+ [m
+   Time t_on = Simulator::Now() - m_start_clear_time;[m
+[1mdiff --git a/src/traffic-control/model/traffic-control-layer.cc b/src/traffic-control/model/traffic-control-layer.cc[m
+[1mindex c43e908..acc1c6e 100755[m
+[1m--- a/src/traffic-control/model/traffic-control-layer.cc[m
+[1m+++ b/src/traffic-control/model/traffic-control-layer.cc[m
+[36m@@ -319,8 +319,8 @@[m [mTrafficControlLayer::Receive (Ptr<NetDevice> device, Ptr<const Packet> p,[m
+                               uint16_t protocol, const Address &from, const Address &to,[m
+                               NetDevice::PacketType packetType)[m
+ {[m
+[31m-  std::cout <<"At Time <" << Simulator::Now ().GetSeconds () << ">, Device "<< device <<", TrafficControlLayer::Receive() is called. ";[m
+[31m-  std::cout << "packet=[" << p << "]\n";[m
+[32m+[m[32m  //std::cout <<"At Time <" << Simulator::Now ().GetSeconds () << ">, Device "<< device <<", TrafficControlLayer::Receive() is called. ";[m
+[32m+[m[32m  //std::cout << "packet=[" << p << "]\n";[m
+   NS_LOG_FUNCTION (this << device << p << protocol << from << to << packetType);[m
+ [m
+   bool found = false;[m
+[36m@@ -350,8 +350,8 @@[m [mTrafficControlLayer::Receive (Ptr<NetDevice> device, Ptr<const Packet> p,[m
+ void[m
+ TrafficControlLayer::Send (Ptr<NetDevice> device, Ptr<QueueDiscItem> item)[m
+ {[m
+[31m-  std::cout <<"At Time <" << Simulator::Now ().GetSeconds () << ">, Device " << device << ", TrafficControlLayer::Send() is called.";[m
+[31m-  std::cout << "item=[" << item << "]\n";[m
+[32m+[m[32m  //std::cout <<"At Time <" << Simulator::Now ().GetSeconds () << ">, Device " << device << ", TrafficControlLayer::Send() is called.";[m
+[32m+[m[32m  //std::cout << "item=[" << item << "]\n";[m
+   NS_LOG_FUNCTION (this << device << item);[m
+ [m
+   NS_LOG_DEBUG ("Send packet to device " << device << " protocol number " <<[m

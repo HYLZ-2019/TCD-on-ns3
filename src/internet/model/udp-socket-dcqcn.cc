@@ -735,8 +735,10 @@ UdpSocketDcqcn::TransmitStart(Ptr<Packet> p) {
 			m_rateAll[hop] = m_bps;
 
 		m_rate = m_bps;
+    std::cout << "m_rate = m_bps = "<<m_rate << "\n";
 		for (uint32_t j = 0; j < maxHop; j++)
 			m_rate = std::min(m_rate, m_rateAll[j]);
+    std::cout << "m_rate = " << m_rate << "\n";
 		return;
 	}
 
@@ -820,6 +822,7 @@ UdpSocketDcqcn::DequeueAndTransmit(void) {
     m_sendingBuffer.pop();
 		if (m_rate == 0) {			//late initialization	
 			m_rate = m_bps;
+      std::cout << "m_rate: initialization = " << m_rate << "\n";
 			for (uint32_t j = 0; j < maxHop; j++) {
 				m_rateAll[j] = m_bps, m_targetRate[j] = m_bps;
 			}
