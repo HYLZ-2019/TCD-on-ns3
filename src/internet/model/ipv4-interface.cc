@@ -214,15 +214,15 @@ Ipv4Interface::Send (Ptr<Packet> p, const Ipv4Header & hdr, Ipv4Address dest)
 {
   NS_LOG_FUNCTION (this << *p << dest);
   static int num = 0; ++num;
-  std::cout <<"At Time <" << Simulator::Now ().GetSeconds () << ">, the {" << num << "}th of Ipv4Interface::Send??\n";
+  //std::cout <<"At Time <" << Simulator::Now ().GetSeconds () << ">, the {" << num << "}th of Ipv4Interface::Send??\n";
   if (!IsUp ())
     {
 
-      std::cout <<"!IsUp() --> return\n";
+      //std::cout <<"!IsUp() --> return\n";
       return;
     }
 
-  std::cout <<"At Time <" << Simulator::Now ().GetSeconds () << ">, the {" << num << "}th of Ipv4Interface::Send 0\n";
+  //std::cout <<"At Time <" << Simulator::Now ().GetSeconds () << ">, the {" << num << "}th of Ipv4Interface::Send 0\n";
   // Check for a loopback device, if it's the case we don't pass through
   // traffic control layer
   if (DynamicCast<LoopbackNetDevice> (m_device))
@@ -234,7 +234,7 @@ Ipv4Interface::Send (Ptr<Packet> p, const Ipv4Header & hdr, Ipv4Address dest)
       return;
     } 
 
-  std::cout <<"At Time <" << Simulator::Now ().GetSeconds () << ">, the {" << num << "}th of Ipv4Interface::Send 1\n";
+  //std::cout <<"At Time <" << Simulator::Now ().GetSeconds () << ">, the {" << num << "}th of Ipv4Interface::Send 1\n";
   NS_ASSERT (m_tc != 0);
 
   // is this packet aimed at a local interface ?
@@ -250,7 +250,7 @@ Ipv4Interface::Send (Ptr<Packet> p, const Ipv4Header & hdr, Ipv4Address dest)
           return;
         }
     }
-  std::cout <<"At Time <" << Simulator::Now ().GetSeconds () << ">, the {" << num << "}th of Ipv4Interface::Send 2\n";
+  //std::cout <<"At Time <" << Simulator::Now ().GetSeconds () << ">, the {" << num << "}th of Ipv4Interface::Send 2\n";
   if (m_device->NeedsArp ())
     {
       NS_LOG_LOGIC ("Needs ARP" << " " << dest);
@@ -292,18 +292,18 @@ Ipv4Interface::Send (Ptr<Packet> p, const Ipv4Header & hdr, Ipv4Address dest)
             }
         }
 
-  std::cout <<"At Time <" << Simulator::Now ().GetSeconds () << ">, the {" << num << "}th of Ipv4Interface::Send 3 " <<found << std::endl;
+  //std::cout <<"At Time <" << Simulator::Now ().GetSeconds () << ">, the {" << num << "}th of Ipv4Interface::Send 3 " <<found << std::endl;
       if (found)
         {
           NS_LOG_LOGIC ("Address Resolved.  Send.");
-          std::cout <<"At Time <" << Simulator::Now ().GetSeconds () << ">, the {" << num << "}th of Ipv4Interface::Send call m_tc -> Send\n";
+          //std::cout <<"At Time <" << Simulator::Now ().GetSeconds () << ">, the {" << num << "}th of Ipv4Interface::Send call m_tc -> Send\n";
           m_tc->Send (m_device, Create<Ipv4QueueDiscItem> (p, hardwareDestination, Ipv4L3Protocol::PROT_NUMBER, hdr));
         }
     }
   else
     {
       NS_LOG_LOGIC ("Doesn't need ARP");
-      std::cout <<"At Time <" << Simulator::Now ().GetSeconds () << ">, the {" << num << "}th of Ipv4Interface::Send call m_tc -> Send\n";
+      //std::cout <<"At Time <" << Simulator::Now ().GetSeconds () << ">, the {" << num << "}th of Ipv4Interface::Send call m_tc -> Send\n";
       m_tc->Send (m_device, Create<Ipv4QueueDiscItem> (p, m_device->GetBroadcast (), Ipv4L3Protocol::PROT_NUMBER, hdr));
     }
 }

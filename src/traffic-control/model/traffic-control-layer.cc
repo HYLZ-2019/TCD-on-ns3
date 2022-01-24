@@ -320,8 +320,8 @@ TrafficControlLayer::Receive (Ptr<NetDevice> device, Ptr<const Packet> p,
                               uint16_t protocol, const Address &from, const Address &to,
                               NetDevice::PacketType packetType)
 {
-  static int num = 0; ++num;
-  std::cout <<"At Time <" << Simulator::Now ().GetSeconds () << ">, the {" << num << "}th of TCL_Receive: packet=[" << p << "], from=[" << from << "], to=[" << to << "] at Device "<< device << "\n";
+  //static int num = 0; ++num;
+  //std::cout <<"At Time <" << Simulator::Now ().GetSeconds () << ">, the {" << num << "}th of TCL_Receive: packet=[" << p << "], from=[" << from << "], to=[" << to << "] at Device "<< device << "\n";
  
   NS_LOG_FUNCTION (this << device << p << protocol << from << to << packetType);
 
@@ -352,8 +352,8 @@ TrafficControlLayer::Receive (Ptr<NetDevice> device, Ptr<const Packet> p,
 void
 TrafficControlLayer::Send (Ptr<NetDevice> device, Ptr<QueueDiscItem> item)
 {
-  static int num = 0; ++num;
-  std::cout <<"At Time <" << Simulator::Now ().GetSeconds () << ">, the {" << num << "}th of TCL_Send: packet=[" << item -> GetPacket() << "] at Device "<< device << "\n";
+  //static int num = 0; ++num;
+  //std::cout <<"At Time <" << Simulator::Now ().GetSeconds () << ">, the {" << num << "}th of TCL_Send: packet=[" << item -> GetPacket() << "] at Device "<< device << "\n";
  
   NS_LOG_FUNCTION (this << device << item);
 

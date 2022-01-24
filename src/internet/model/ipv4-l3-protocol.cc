@@ -965,7 +965,7 @@ Ipv4L3Protocol::SendRealOut (Ptr<Ipv4Route> route,
 {
   NS_LOG_FUNCTION (this << route << packet << &ipHeader);
   static int num = 0; ++num;
-  std::cout <<"At Time <" << Simulator::Now ().GetSeconds () << ">, the {" << num << "}th of Ipv4L3Protocol::SendRealOut\n";
+  //std::cout <<"At Time <" << Simulator::Now ().GetSeconds () << ">, the {" << num << "}th of Ipv4L3Protocol::SendRealOut\n";
   if (route == 0)
     {
       NS_LOG_WARN ("No route to host.  Drop.");
