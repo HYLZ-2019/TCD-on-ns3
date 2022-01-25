@@ -2,12 +2,28 @@ import json
 
 nodes = {
     '0': 'node-0',
-    '1': 'node-1'
+    '1': 'node-1',
+    '2': 'node-2',
+    '3': 'node-3',
+    '4': 'node-4',
+    '5': 'node-5',
+    '6': 'node-6',
+    '7': 'node-7',
+    '8': 'node-8',
+    '9': 'node-9',
 }
 
 # (from, to)
 edges =[
-    ('0-0', '1-0')
+    ('0-0', '3-0'),
+    ('1-0', '3-1'),
+    ('2-0', '4-0'), 
+    ('3-2', '5-0'),
+    ('4-1', '5-1'),
+    ('5-2', '6-0'),
+    ('6-1', '7-0'),
+    ('6-2', '8-0'),
+    ('6-3', '9-0')
 ]
 
 json_content = {
@@ -29,7 +45,7 @@ for edge in edges:
         "tTimeline": []
     }
     for i in [0, 1]:
-        with open(f"results/queue-{edge[i]}.dat") as f:
+        with open(f"results/example_congest/queue-{edge[i]}.dat") as f:
             rows = f.readlines()
             for row in rows:
                 data = row.split()
@@ -38,8 +54,8 @@ for edge in edges:
                     edge_dict['sTimeline'].append((time, queue))
                 else:
                     edge_dict['tTimeline'].append((time, queue))
+        json_content['timeLimit'] = max(json_content['timeLimit'], len(rows))        
     json_content['edges'].append(edge_dict)
-    json_content['timeLimit'] = max(json_content['timeLimit'], int(rows[-1].split()[0])+1)
 
 json_str = json.dumps(json_content)
 
