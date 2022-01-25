@@ -86,8 +86,8 @@ LosslessQueueDisc::DoEnqueue (Ptr<QueueDiscItem> item)
 {
   NS_LOG_FUNCTION (this << item);
 
-  static int num = 0; ++num;
-  std::cout <<"At Time <" << Simulator::Now ().GetSeconds () << ">, the {" << num << "}th of DoEnqueue: packet=[" << item -> GetPacket() << "].\n";
+  //static int num = 0; ++num;
+  //std::cout <<"At Time <" << Simulator::Now ().GetSeconds () << ">, the {" << num << "}th of DoEnqueue: packet=[" << item -> GetPacket() << "].\n";
 
   bool retval = GetInternalQueue (0)->Enqueue (item);
 
@@ -210,8 +210,10 @@ LosslessQueueDisc::DoDequeue (void)
 
   TcdState curTCD = getCurrentTCD();
   static int num = 0; ++num;
+  if (GetCurrentSize() > QueueSize("0p")) {
   std::cout <<"At Time <" << Simulator::Now ().GetSeconds () << ">, the {" << num << "}th of DoDequeue: packet=[" << pk<< "], "
             << "current TCD state is " << curTCD << ", length of queue is " << GetCurrentSize() << ".";
+  }
 
   switch (curTCD){
     case TcdState::TCD_CONGESTION:

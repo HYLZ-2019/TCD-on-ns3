@@ -1117,7 +1117,6 @@ QueueDisc::Transmit (Ptr<QueueDiscItem> item)
       item->GetPacket ()->RemovePacketTag (priorityTag);
     }
   NS_ASSERT_MSG (m_send, "Send callback not set");
-  std::cout << "**m_send!\n";
   m_send (item);
 
   // the behavior here slightly diverges from Linux. In Linux, it is advised that
