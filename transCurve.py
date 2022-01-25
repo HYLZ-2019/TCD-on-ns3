@@ -27,4 +27,4 @@ def compare(file1, file2, name1, name2):
     plt.show()
 
 
-compare("results/tcd/example_congest/queue-6-2.dat", "results/tcd/example_congest/queue-5-2.dat", "6-2", "5-2")
+compare("results/tcd/example_congest/queue-6-2.dat", "results/original/example_congest/queue-6-2.dat", "tcd", "original")

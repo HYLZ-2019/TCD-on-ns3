@@ -144,7 +144,7 @@ LosslessQueueDisc::DoDequeue (void)
       uint32_t num = (*node) -> GetNDevices();
       for (uint32_t k = 0; k + 1 != num; ++k) {
         dv = (*node)->GetDevice(k);
-
+        //std::cout << "dv->GetAddress(): " << dv->GetAddress() <<"\n";
         if (dv->GetAddress() == destMAC){
           found = 1;
           destNode = *node;
@@ -153,6 +153,7 @@ LosslessQueueDisc::DoDequeue (void)
       }
       if (found == 1) break;
     }
+    //std::cout << "destMAC: " << destMAC << "\n";
     if (found == 0){
       throw "The device for the destination MAC is not found! (Maybe destMAC is BROADCAST?)";
     }
@@ -172,9 +173,10 @@ LosslessQueueDisc::DoDequeue (void)
     //std::cout << "Device address of found route: " << nextQueueMAC << "\n";
     //std::cout << "Packet with GetAddress() == " << destMAC << std::endl;
     bool destOff = ! onoffTable -> getValue(nextQueueMAC); 
-    
+    std::string res =  destOff ? "OFF":"ON";
+    //std::cout << "LosslessQueueDisc " << this << ": nextQueueMAC = " << nextQueueMAC << ", result = " << res << std::endl;
     if (destOff) {
-        //std::cout << "The destination is blocked.\n";
+        //std::cout << "LosslessQueueDisc " << this << ": The destination is blocked by an OFF.\n";
         NS_LOG_LOGIC ("The queue front is blocked by an OFF destination.");
         reportOutputBlocked();
         onoffTable -> blockQueueAdding(destMAC, (ns3::Ptr<ns3::QueueDisc>)this);
@@ -184,8 +186,8 @@ LosslessQueueDisc::DoDequeue (void)
     }
   }
   catch (const char* msg){
-    //std::cout << "Caught an exception!\n";
-    //std::cout << msg << "\n";
+    std::cout << "Caught an exception!\n";
+    std::cout << msg << "\n";
   }
   reportOutputClear();
 
