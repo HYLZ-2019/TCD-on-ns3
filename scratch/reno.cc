@@ -245,7 +245,7 @@ void installApps(std::string filename) {
     double interval, stTime, ndTime, period;
     int maxsize, maxcnt, isperiodic;
     std::cin >> clinode >> servChannelSeq >> servChannelEnd >> servport >> interval >> maxsize >> maxcnt >> stTime >> ndTime >> isperiodic >> period;
-    std::cout << interval << "!!!!!!!!!!!!!!!!!!!!!!\n";
+    //std::cout << interval << "!!!!!!!!!!!!!!!!!!!!!!\n";
     stTime += ColdStartEnd.GetMilliSeconds();
     ndTime += ColdStartEnd.GetMilliSeconds();
     InstallUdpClient(nodes.Get (clinode), IPAddresses [servChannelSeq].GetAddress (servChannelEnd), servport, MilliSeconds(stTime), MilliSeconds(ndTime), MicroSeconds(interval * 1000), maxsize, maxcnt);
