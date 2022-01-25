@@ -277,6 +277,7 @@ int main (int argc, char *argv[])
   cmd.AddValue ("topologyFile", "Path to the file describing the network topology structure you need (e.g., scratch/topo.txt)", topologyFile);
   cmd.AddValue ("appsFile", "Path to the file describing how UDP server/client applications are installed.", appsFile);
   cmd.AddValue ("stopTime", "Stop time for applications / simulation time will be stopTime", stopTime);
+  cmd.AddValue ("output", "Directory to hold output results", dir);
   cmd.Parse (argc, argv);
 
   TypeId qdTid;
