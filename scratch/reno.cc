@@ -132,7 +132,7 @@ CheckQueueSize (Ptr<QueueDisc> queue)
       queue_num ++;
     }  // Check queue size every 1/100 of a second
   }
-  Simulator::Schedule (Seconds (1), &CheckQueueSize, queue);
+  Simulator::Schedule (MilliSeconds (10), &CheckQueueSize, queue);
 }
 
 /** Build up a network according to the configurations in *filename*.
@@ -248,11 +248,11 @@ void installApps(std::string filename) {
     std::cout << interval << "!!!!!!!!!!!!!!!!!!!!!!\n";
     stTime += ColdStartEnd.GetMilliSeconds();
     ndTime += ColdStartEnd.GetMilliSeconds();
-    InstallUdpClient(nodes.Get (clinode), IPAddresses [servChannelSeq].GetAddress (servChannelEnd), servport, MilliSeconds(stTime), MilliSeconds(ndTime), NanoSeconds(interval * 1000), maxsize, maxcnt);
+    InstallUdpClient(nodes.Get (clinode), IPAddresses [servChannelSeq].GetAddress (servChannelEnd), servport, MilliSeconds(stTime), MilliSeconds(ndTime), MicroSeconds(interval * 1000), maxsize, maxcnt);
     if (isperiodic) {
       stTime += period, ndTime += period;
       for (; MilliSeconds(stTime + period) < stopTime; stTime += period, ndTime += period) {
-        InstallUdpClient(nodes.Get (clinode), IPAddresses [servChannelSeq].GetAddress (servChannelEnd), servport, MilliSeconds(stTime), MilliSeconds(ndTime), NanoSeconds(interval * 1000), maxsize, maxcnt);
+        InstallUdpClient(nodes.Get (clinode), IPAddresses [servChannelSeq].GetAddress (servChannelEnd), servport, MilliSeconds(stTime), MilliSeconds(ndTime), MicroSeconds(interval * 1000), maxsize, maxcnt);
       }
     }
   }
