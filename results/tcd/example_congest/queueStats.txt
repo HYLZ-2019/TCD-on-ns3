@@ -1,0 +1,190 @@
+Stat for Queue 0-0:
+Packets/Bytes received: 12701 / 12688780
+Packets/Bytes enqueued: 12701 / 12688780
+Packets/Bytes dequeued: 12701 / 12688780
+Packets/Bytes requeued: 0 / 0
+Packets/Bytes dropped: 0 / 0
+Packets/Bytes dropped before enqueue: 0 / 0
+Packets/Bytes dropped after dequeue: 0 / 0
+Packets/Bytes sent: 12701 / 12688780
+Packets/Bytes marked: 0 / 0
+
+Stat for Queue 1-0:
+Packets/Bytes received: 5089 / 5076780
+Packets/Bytes enqueued: 5089 / 5076780
+Packets/Bytes dequeued: 5089 / 5076780
+Packets/Bytes requeued: 0 / 0
+Packets/Bytes dropped: 0 / 0
+Packets/Bytes dropped before enqueue: 0 / 0
+Packets/Bytes dropped after dequeue: 0 / 0
+Packets/Bytes sent: 5089 / 5076780
+Packets/Bytes marked: 0 / 0
+
+Stat for Queue 2-0:
+Packets/Bytes received: 12445 / 12438444
+Packets/Bytes enqueued: 12445 / 12438444
+Packets/Bytes dequeued: 12445 / 12438444
+Packets/Bytes requeued: 0 / 0
+Packets/Bytes dropped: 0 / 0
+Packets/Bytes dropped before enqueue: 0 / 0
+Packets/Bytes dropped after dequeue: 0 / 0
+Packets/Bytes sent: 12445 / 12438444
+Packets/Bytes marked: 0 / 0
+
+Stat for Queue 3-0:
+Packets/Bytes received: 13 / 960
+Packets/Bytes enqueued: 13 / 960
+Packets/Bytes dequeued: 13 / 960
+Packets/Bytes requeued: 0 / 0
+Packets/Bytes dropped: 0 / 0
+Packets/Bytes dropped before enqueue: 0 / 0
+Packets/Bytes dropped after dequeue: 0 / 0
+Packets/Bytes sent: 13 / 960
+Packets/Bytes marked: 0 / 0
+Stat for Queue 3-1:
+Packets/Bytes received: 32 / 1492
+Packets/Bytes enqueued: 32 / 1492
+Packets/Bytes dequeued: 32 / 1492
+Packets/Bytes requeued: 0 / 0
+Packets/Bytes dropped: 0 / 0
+Packets/Bytes dropped before enqueue: 0 / 0
+Packets/Bytes dropped after dequeue: 0 / 0
+Packets/Bytes sent: 32 / 1492
+Packets/Bytes marked: 0 / 0
+Stat for Queue 3-2:
+Packets/Bytes received: 17780 / 17758340
+Packets/Bytes enqueued: 17780 / 17758340
+Packets/Bytes dequeued: 17780 / 17758340
+Packets/Bytes requeued: 0 / 0
+Packets/Bytes dropped: 0 / 0
+Packets/Bytes dropped before enqueue: 0 / 0
+Packets/Bytes dropped after dequeue: 0 / 0
+Packets/Bytes sent: 17780 / 17758340
+Packets/Bytes marked: 0 / 0
+
+Stat for Queue 4-0:
+Packets/Bytes received: 7 / 408
+Packets/Bytes enqueued: 7 / 408
+Packets/Bytes dequeued: 7 / 408
+Packets/Bytes requeued: 0 / 0
+Packets/Bytes dropped: 0 / 0
+Packets/Bytes dropped before enqueue: 0 / 0
+Packets/Bytes dropped after dequeue: 0 / 0
+Packets/Bytes sent: 7 / 408
+Packets/Bytes marked: 0 / 0
+Stat for Queue 4-1:
+Packets/Bytes received: 12444 / 12433776
+Packets/Bytes enqueued: 12444 / 12433776
+Packets/Bytes dequeued: 12444 / 12433776
+Packets/Bytes requeued: 0 / 0
+Packets/Bytes dropped: 0 / 0
+Packets/Bytes dropped before enqueue: 0 / 0
+Packets/Bytes dropped after dequeue: 0 / 0
+Packets/Bytes sent: 12444 / 12433776
+Packets/Bytes marked: 0 / 0
+
+Stat for Queue 5-0:
+Packets/Bytes received: 40 / 2300
+Packets/Bytes enqueued: 40 / 2300
+Packets/Bytes dequeued: 40 / 2300
+Packets/Bytes requeued: 0 / 0
+Packets/Bytes dropped: 0 / 0
+Packets/Bytes dropped before enqueue: 0 / 0
+Packets/Bytes dropped after dequeue: 0 / 0
+Packets/Bytes sent: 40 / 2300
+Packets/Bytes marked: 0 / 0
+Stat for Queue 5-1:
+Packets/Bytes received: 11 / 668
+Packets/Bytes enqueued: 11 / 668
+Packets/Bytes dequeued: 11 / 668
+Packets/Bytes requeued: 0 / 0
+Packets/Bytes dropped: 0 / 0
+Packets/Bytes dropped before enqueue: 0 / 0
+Packets/Bytes dropped after dequeue: 0 / 0
+Packets/Bytes sent: 11 / 668
+Packets/Bytes marked: 0 / 0
+Stat for Queue 5-2:
+Packets/Bytes received: 30190 / 30176836
+Packets/Bytes enqueued: 30190 / 30176836
+Packets/Bytes dequeued: 30190 / 30176836
+Packets/Bytes requeued: 0 / 0
+Packets/Bytes dropped: 0 / 0
+Packets/Bytes dropped before enqueue: 0 / 0
+Packets/Bytes dropped after dequeue: 0 / 0
+Packets/Bytes sent: 30190 / 30176836
+Packets/Bytes marked: 0 / 0
+
+Stat for Queue 6-0:
+Packets/Bytes received: 33 / 1584
+Packets/Bytes enqueued: 33 / 1584
+Packets/Bytes dequeued: 33 / 1584
+Packets/Bytes requeued: 0 / 0
+Packets/Bytes dropped: 0 / 0
+Packets/Bytes dropped before enqueue: 0 / 0
+Packets/Bytes dropped after dequeue: 0 / 0
+Packets/Bytes sent: 33 / 1584
+Packets/Bytes marked: 0 / 0
+Stat for Queue 6-1:
+Packets/Bytes received: 25098 / 25094240
+Packets/Bytes enqueued: 25098 / 25094240
+Packets/Bytes dequeued: 25098 / 25094240
+Packets/Bytes requeued: 0 / 0
+Packets/Bytes dropped: 0 / 0
+Packets/Bytes dropped before enqueue: 0 / 0
+Packets/Bytes dropped after dequeue: 0 / 0
+Packets/Bytes sent: 25098 / 25094240
+Packets/Bytes marked: 0 / 0
+Stat for Queue 6-2:
+Packets/Bytes received: 26819 / 26813316
+Packets/Bytes enqueued: 26819 / 26813316
+Packets/Bytes dequeued: 26819 / 26813316
+Packets/Bytes requeued: 0 / 0
+Packets/Bytes dropped: 0 / 0
+Packets/Bytes dropped before enqueue: 0 / 0
+Packets/Bytes dropped after dequeue: 0 / 0
+Packets/Bytes sent: 26819 / 26813316
+Packets/Bytes marked: 0 / 0
+Stat for Queue 6-3:
+Packets/Bytes received: 28 / 932
+Packets/Bytes enqueued: 28 / 932
+Packets/Bytes dequeued: 28 / 932
+Packets/Bytes requeued: 0 / 0
+Packets/Bytes dropped: 0 / 0
+Packets/Bytes dropped before enqueue: 0 / 0
+Packets/Bytes dropped after dequeue: 0 / 0
+Packets/Bytes sent: 28 / 932
+Packets/Bytes marked: 0 / 0
+
+Stat for Queue 7-0:
+Packets/Bytes received: 7 / 444
+Packets/Bytes enqueued: 7 / 444
+Packets/Bytes dequeued: 7 / 444
+Packets/Bytes requeued: 0 / 0
+Packets/Bytes dropped: 0 / 0
+Packets/Bytes dropped before enqueue: 0 / 0
+Packets/Bytes dropped after dequeue: 0 / 0
+Packets/Bytes sent: 7 / 444
+Packets/Bytes marked: 0 / 0
+
+Stat for Queue 8-0:
+Packets/Bytes received: 47 / 1536
+Packets/Bytes enqueued: 47 / 1536
+Packets/Bytes dequeued: 47 / 1536
+Packets/Bytes requeued: 0 / 0
+Packets/Bytes dropped: 0 / 0
+Packets/Bytes dropped before enqueue: 0 / 0
+Packets/Bytes dropped after dequeue: 0 / 0
+Packets/Bytes sent: 47 / 1536
+Packets/Bytes marked: 0 / 0
+
+Stat for Queue 9-0:
+Packets/Bytes received: 21748 / 21742388
+Packets/Bytes enqueued: 21748 / 21742388
+Packets/Bytes dequeued: 21748 / 21742388
+Packets/Bytes requeued: 0 / 0
+Packets/Bytes dropped: 0 / 0
+Packets/Bytes dropped before enqueue: 0 / 0
+Packets/Bytes dropped after dequeue: 0 / 0
+Packets/Bytes sent: 21748 / 21742388
+Packets/Bytes marked: 0 / 0
+

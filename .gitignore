@@ -3,4 +3,3 @@ build
 .waf*
 .vscode
 .lock-waf*
-results
