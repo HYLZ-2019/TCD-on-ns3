@@ -39,7 +39,7 @@ for edge in edges:
                 else:
                     edge_dict['tTimeline'].append((time, queue))
     json_content['edges'].append(edge_dict)
-    json_content['timeLimit'] = max(json_content['timeLimit'], int(rows[-1].split()[0]))
+    json_content['timeLimit'] = max(json_content['timeLimit'], int(rows[-1].split()[0])+1)
 
 json_str = json.dumps(json_content)
 
