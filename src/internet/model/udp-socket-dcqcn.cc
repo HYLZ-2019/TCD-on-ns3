@@ -1668,7 +1668,7 @@ UdpSocketDcqcn::ForwardUp (Ptr<Packet> packet, Ipv4Header header, uint16_t port,
 		}
 		
     //std::cout << "(A)M_Rate="<<m_rate<<std::endl;
-		if (ecnbits & (TCD_CONGESTED_BIT | TCD_UNDETERMINED_BIT)) { //这应该是QCN的一部分
+		if (ecnbits & TCD_CONGESTED_BIT) { //这应该是QCN的一部分
 			rpr_cnm_received(0, qfb*1.0 / (total + 1)); //这是DCQCN的一部分，DCQCN的部分都要搬进来
 		}
 
