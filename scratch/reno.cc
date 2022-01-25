@@ -131,6 +131,7 @@ CheckQueueSize (Ptr<QueueDisc> queue)
       fPlotQueue.close ();
       queue_num ++;
     }  // Check queue size every 1/100 of a second
+    //globalOnoffTable->printAll();
   }
   Simulator::Schedule (MilliSeconds (10), &CheckQueueSize, queue);
 }
@@ -304,6 +305,8 @@ int main (int argc, char *argv[])
 
   buildNetwork(topologyFile);
 
+  globalOnoffTable->setGlobalNodes(nodes);
+
   // Calls function to check queue size
   Simulator::ScheduleNow (&CheckQueueSize, qd.Get (0));
 
@@ -334,6 +337,7 @@ int main (int argc, char *argv[])
     for (uint32_t k = 0; k + 1 != num; ++k) {
       Ptr<QueueDisc> queue= qd.Get(queue_num);
       myfile << "Stat for Queue " << i << "-" << k << ":";
+      myfile << "MAC Address: " << node->GetDevice(k)->GetAddress() << "\n";
       myfile << qd.Get (queue_num)->GetStats ();
       queue_num ++;
     }  // Check queue size every 1/100 of a second
