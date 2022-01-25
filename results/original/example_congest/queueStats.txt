@@ -12,197 +12,197 @@ Packets/Bytes marked: 0 / 0
 
 Stat for Queue 1-0:MAC Address: 02-06-00:00:00:00:00:03
 
-Packets/Bytes received: 5089 / 5076780
-Packets/Bytes enqueued: 5089 / 5076780
-Packets/Bytes dequeued: 5089 / 5076780
+Packets/Bytes received: 4391 / 4378780
+Packets/Bytes enqueued: 4391 / 4378780
+Packets/Bytes dequeued: 4391 / 4378780
 Packets/Bytes requeued: 0 / 0
 Packets/Bytes dropped: 0 / 0
 Packets/Bytes dropped before enqueue: 0 / 0
 Packets/Bytes dropped after dequeue: 0 / 0
-Packets/Bytes sent: 5089 / 5076780
+Packets/Bytes sent: 4391 / 4378780
 Packets/Bytes marked: 0 / 0
 
 Stat for Queue 2-0:MAC Address: 02-06-00:00:00:00:00:05
 
-Packets/Bytes received: 12445 / 12438444
-Packets/Bytes enqueued: 12445 / 12438444
-Packets/Bytes dequeued: 12445 / 12438444
+Packets/Bytes received: 6292 / 6285444
+Packets/Bytes enqueued: 6292 / 6285444
+Packets/Bytes dequeued: 6292 / 6285444
 Packets/Bytes requeued: 0 / 0
 Packets/Bytes dropped: 0 / 0
 Packets/Bytes dropped before enqueue: 0 / 0
 Packets/Bytes dropped after dequeue: 0 / 0
-Packets/Bytes sent: 12445 / 12438444
+Packets/Bytes sent: 6292 / 6285444
 Packets/Bytes marked: 0 / 0
 
 Stat for Queue 3-0:MAC Address: 02-06-00:00:00:00:00:02
 
-Packets/Bytes received: 15 / 1016
-Packets/Bytes enqueued: 15 / 1016
-Packets/Bytes dequeued: 15 / 1016
+Packets/Bytes received: 23 / 1240
+Packets/Bytes enqueued: 23 / 1240
+Packets/Bytes dequeued: 23 / 1240
 Packets/Bytes requeued: 0 / 0
 Packets/Bytes dropped: 0 / 0
 Packets/Bytes dropped before enqueue: 0 / 0
 Packets/Bytes dropped after dequeue: 0 / 0
-Packets/Bytes sent: 15 / 1016
+Packets/Bytes sent: 23 / 1240
 Packets/Bytes marked: 0 / 0
 Stat for Queue 3-1:MAC Address: 02-06-00:00:00:00:00:04
 
-Packets/Bytes received: 32 / 1492
-Packets/Bytes enqueued: 32 / 1492
-Packets/Bytes dequeued: 32 / 1492
+Packets/Bytes received: 36 / 1604
+Packets/Bytes enqueued: 36 / 1604
+Packets/Bytes dequeued: 36 / 1604
 Packets/Bytes requeued: 0 / 0
 Packets/Bytes dropped: 0 / 0
 Packets/Bytes dropped before enqueue: 0 / 0
 Packets/Bytes dropped after dequeue: 0 / 0
-Packets/Bytes sent: 32 / 1492
+Packets/Bytes sent: 36 / 1604
 Packets/Bytes marked: 0 / 0
 Stat for Queue 3-2:MAC Address: 02-06-00:00:00:00:00:07
 
-Packets/Bytes received: 17780 / 17758340
-Packets/Bytes enqueued: 17780 / 17758340
-Packets/Bytes dequeued: 17780 / 17758340
+Packets/Bytes received: 17082 / 17060340
+Packets/Bytes enqueued: 17082 / 17060340
+Packets/Bytes dequeued: 17082 / 17060340
 Packets/Bytes requeued: 0 / 0
 Packets/Bytes dropped: 0 / 0
 Packets/Bytes dropped before enqueue: 0 / 0
 Packets/Bytes dropped after dequeue: 0 / 0
-Packets/Bytes sent: 17780 / 17758340
+Packets/Bytes sent: 17082 / 17060340
 Packets/Bytes marked: 0 / 0
 
 Stat for Queue 4-0:MAC Address: 02-06-00:00:00:00:00:06
 
-Packets/Bytes received: 9 / 464
-Packets/Bytes enqueued: 9 / 464
-Packets/Bytes dequeued: 9 / 464
+Packets/Bytes received: 17 / 688
+Packets/Bytes enqueued: 17 / 688
+Packets/Bytes dequeued: 17 / 688
 Packets/Bytes requeued: 0 / 0
 Packets/Bytes dropped: 0 / 0
 Packets/Bytes dropped before enqueue: 0 / 0
 Packets/Bytes dropped after dequeue: 0 / 0
-Packets/Bytes sent: 9 / 464
+Packets/Bytes sent: 17 / 688
 Packets/Bytes marked: 0 / 0
 Stat for Queue 4-1:MAC Address: 02-06-00:00:00:00:00:09
 
-Packets/Bytes received: 12444 / 12433776
-Packets/Bytes enqueued: 12444 / 12433776
-Packets/Bytes dequeued: 12444 / 12433776
+Packets/Bytes received: 6294 / 6283776
+Packets/Bytes enqueued: 6294 / 6283776
+Packets/Bytes dequeued: 6294 / 6283776
 Packets/Bytes requeued: 0 / 0
 Packets/Bytes dropped: 0 / 0
 Packets/Bytes dropped before enqueue: 0 / 0
 Packets/Bytes dropped after dequeue: 0 / 0
-Packets/Bytes sent: 12444 / 12433776
+Packets/Bytes sent: 6294 / 6283776
 Packets/Bytes marked: 0 / 0
 
 Stat for Queue 5-0:MAC Address: 02-06-00:00:00:00:00:08
 
-Packets/Bytes received: 42 / 2356
-Packets/Bytes enqueued: 42 / 2356
-Packets/Bytes dequeued: 42 / 2356
+Packets/Bytes received: 54 / 2692
+Packets/Bytes enqueued: 54 / 2692
+Packets/Bytes dequeued: 54 / 2692
 Packets/Bytes requeued: 0 / 0
 Packets/Bytes dropped: 0 / 0
 Packets/Bytes dropped before enqueue: 0 / 0
 Packets/Bytes dropped after dequeue: 0 / 0
-Packets/Bytes sent: 42 / 2356
+Packets/Bytes sent: 54 / 2692
 Packets/Bytes marked: 0 / 0
 Stat for Queue 5-1:MAC Address: 02-06-00:00:00:00:00:0a
 
-Packets/Bytes received: 13 / 724
-Packets/Bytes enqueued: 13 / 724
-Packets/Bytes dequeued: 13 / 724
+Packets/Bytes received: 21 / 948
+Packets/Bytes enqueued: 21 / 948
+Packets/Bytes dequeued: 21 / 948
 Packets/Bytes requeued: 0 / 0
 Packets/Bytes dropped: 0 / 0
 Packets/Bytes dropped before enqueue: 0 / 0
 Packets/Bytes dropped after dequeue: 0 / 0
-Packets/Bytes sent: 13 / 724
+Packets/Bytes sent: 21 / 948
 Packets/Bytes marked: 0 / 0
 Stat for Queue 5-2:MAC Address: 02-06-00:00:00:00:00:0b
 
-Packets/Bytes received: 30190 / 30176836
-Packets/Bytes enqueued: 30190 / 30176836
-Packets/Bytes dequeued: 30190 / 30176836
+Packets/Bytes received: 23346 / 23332836
+Packets/Bytes enqueued: 23346 / 23332836
+Packets/Bytes dequeued: 23346 / 23332836
 Packets/Bytes requeued: 0 / 0
 Packets/Bytes dropped: 0 / 0
 Packets/Bytes dropped before enqueue: 0 / 0
 Packets/Bytes dropped after dequeue: 0 / 0
-Packets/Bytes sent: 30190 / 30176836
+Packets/Bytes sent: 23346 / 23332836
 Packets/Bytes marked: 0 / 0
 
 Stat for Queue 6-0:MAC Address: 02-06-00:00:00:00:00:0c
 
-Packets/Bytes received: 37 / 1696
-Packets/Bytes enqueued: 37 / 1696
-Packets/Bytes dequeued: 37 / 1696
+Packets/Bytes received: 57 / 2256
+Packets/Bytes enqueued: 57 / 2256
+Packets/Bytes dequeued: 57 / 2256
 Packets/Bytes requeued: 0 / 0
 Packets/Bytes dropped: 0 / 0
 Packets/Bytes dropped before enqueue: 0 / 0
 Packets/Bytes dropped after dequeue: 0 / 0
-Packets/Bytes sent: 37 / 1696
+Packets/Bytes sent: 57 / 2256
 Packets/Bytes marked: 0 / 0
 Stat for Queue 6-1:MAC Address: 02-06-00:00:00:00:00:0d
 
-Packets/Bytes received: 25098 / 25094240
-Packets/Bytes enqueued: 25098 / 25094240
-Packets/Bytes dequeued: 25098 / 25094240
+Packets/Bytes received: 18953 / 18949240
+Packets/Bytes enqueued: 18953 / 18949240
+Packets/Bytes dequeued: 18953 / 18949240
 Packets/Bytes requeued: 0 / 0
 Packets/Bytes dropped: 0 / 0
 Packets/Bytes dropped before enqueue: 0 / 0
 Packets/Bytes dropped after dequeue: 0 / 0
-Packets/Bytes sent: 25098 / 25094240
+Packets/Bytes sent: 18953 / 18949240
 Packets/Bytes marked: 0 / 0
 Stat for Queue 6-2:MAC Address: 02-06-00:00:00:00:00:0f
 
-Packets/Bytes received: 26819 / 26813316
-Packets/Bytes enqueued: 26819 / 26813316
-Packets/Bytes dequeued: 26819 / 26813316
+Packets/Bytes received: 25997 / 25991316
+Packets/Bytes enqueued: 25997 / 25991316
+Packets/Bytes dequeued: 25997 / 25991316
 Packets/Bytes requeued: 0 / 0
 Packets/Bytes dropped: 0 / 0
 Packets/Bytes dropped before enqueue: 0 / 0
 Packets/Bytes dropped after dequeue: 0 / 0
-Packets/Bytes sent: 26819 / 26813316
+Packets/Bytes sent: 25997 / 25991316
 Packets/Bytes marked: 0 / 0
 Stat for Queue 6-3:MAC Address: 02-06-00:00:00:00:00:12
 
-Packets/Bytes received: 28 / 932
-Packets/Bytes enqueued: 28 / 932
-Packets/Bytes dequeued: 28 / 932
+Packets/Bytes received: 35 / 1128
+Packets/Bytes enqueued: 35 / 1128
+Packets/Bytes dequeued: 35 / 1128
 Packets/Bytes requeued: 0 / 0
 Packets/Bytes dropped: 0 / 0
 Packets/Bytes dropped before enqueue: 0 / 0
 Packets/Bytes dropped after dequeue: 0 / 0
-Packets/Bytes sent: 28 / 932
+Packets/Bytes sent: 35 / 1128
 Packets/Bytes marked: 0 / 0
 
 Stat for Queue 7-0:MAC Address: 02-06-00:00:00:00:00:0e
 
-Packets/Bytes received: 11 / 556
-Packets/Bytes enqueued: 11 / 556
-Packets/Bytes dequeued: 11 / 556
+Packets/Bytes received: 27 / 1004
+Packets/Bytes enqueued: 27 / 1004
+Packets/Bytes dequeued: 27 / 1004
 Packets/Bytes requeued: 0 / 0
 Packets/Bytes dropped: 0 / 0
 Packets/Bytes dropped before enqueue: 0 / 0
 Packets/Bytes dropped after dequeue: 0 / 0
-Packets/Bytes sent: 11 / 556
+Packets/Bytes sent: 27 / 1004
 Packets/Bytes marked: 0 / 0
 
 Stat for Queue 8-0:MAC Address: 02-06-00:00:00:00:00:10
 
-Packets/Bytes received: 47 / 1536
-Packets/Bytes enqueued: 47 / 1536
-Packets/Bytes dequeued: 47 / 1536
+Packets/Bytes received: 58 / 1844
+Packets/Bytes enqueued: 58 / 1844
+Packets/Bytes dequeued: 58 / 1844
 Packets/Bytes requeued: 0 / 0
 Packets/Bytes dropped: 0 / 0
 Packets/Bytes dropped before enqueue: 0 / 0
 Packets/Bytes dropped after dequeue: 0 / 0
-Packets/Bytes sent: 47 / 1536
+Packets/Bytes sent: 58 / 1844
 Packets/Bytes marked: 0 / 0
 
 Stat for Queue 9-0:MAC Address: 02-06-00:00:00:00:00:11
 
-Packets/Bytes received: 21748 / 21742388
-Packets/Bytes enqueued: 21748 / 21742388
-Packets/Bytes dequeued: 21748 / 21742388
+Packets/Bytes received: 21623 / 21617388
+Packets/Bytes enqueued: 21623 / 21617388
+Packets/Bytes dequeued: 21623 / 21617388
 Packets/Bytes requeued: 0 / 0
 Packets/Bytes dropped: 0 / 0
 Packets/Bytes dropped before enqueue: 0 / 0
 Packets/Bytes dropped after dequeue: 0 / 0
-Packets/Bytes sent: 21748 / 21742388
+Packets/Bytes sent: 21623 / 21617388
 Packets/Bytes marked: 0 / 0
 
