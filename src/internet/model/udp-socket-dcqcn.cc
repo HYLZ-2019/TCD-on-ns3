@@ -80,12 +80,12 @@ UdpSocketDcqcn::GetTypeId (void)
                    MakeCallbackAccessor (&UdpSocketDcqcn::m_icmpCallback6),
                    MakeCallbackChecker ())
     .AddAttribute ("bps", "Default DataRate of the Socket",
-                DataRateValue (DataRate ("1Mb/s")),
+                DataRateValue (DataRate ("40Mb/s")),
                 MakeDataRateAccessor (&UdpSocketDcqcn::m_bps),
                 MakeDataRateChecker ())
 			.AddAttribute("ClampTargetRate",
 				"Clamp target rate.",
-				BooleanValue(false),
+				BooleanValue(true),
 				MakeBooleanAccessor(&UdpSocketDcqcn::m_EcnClampTgtRate),
 				MakeBooleanChecker())
 			.AddAttribute("ClampTargetRateAfterTimeInc",
@@ -105,7 +105,7 @@ UdpSocketDcqcn::GetTypeId (void)
 				MakeDoubleChecker<double>())
 			.AddAttribute("RPTimer",
 				"The rate increase timer at RP in microseconds",
-				DoubleValue(1500.0),
+				DoubleValue(60.0),
 				MakeDoubleAccessor(&UdpSocketDcqcn::m_rpgTimeReset),
 				MakeDoubleChecker<double>())
 			.AddAttribute("FastRecoveryTimes",
@@ -115,27 +115,27 @@ UdpSocketDcqcn::GetTypeId (void)
 				MakeUintegerChecker<uint32_t>())
 			.AddAttribute("DCTCPGain",
 				"Control gain parameter which determines the level of rate decrease",
-				DoubleValue(1.0 / 3),
+				DoubleValue(0.00390625),
 				MakeDoubleAccessor(&UdpSocketDcqcn::m_g),
 				MakeDoubleChecker<double>())
 			.AddAttribute("MinRate",
 				"Minimum rate of a throttled flow",
-				DataRateValue(DataRate("100b/s")),
+				DataRateValue(DataRate("100Kb/s")),
 				MakeDataRateAccessor(&UdpSocketDcqcn::m_minRate),
 				MakeDataRateChecker())
 			.AddAttribute("ByteCounter",
 				"Byte counter constant for increment process.",
-				UintegerValue(150000),
+				UintegerValue(300000000),
 				MakeUintegerAccessor(&UdpSocketDcqcn::m_bc),
 				MakeUintegerChecker<uint32_t>())
 			.AddAttribute("RateAI",
 				"Rate increment unit in AI period",
-				DataRateValue(DataRate("5Mb/s")),
+				DataRateValue(DataRate("40Kb/s")),
 				MakeDataRateAccessor(&UdpSocketDcqcn::m_rai),
 				MakeDataRateChecker())
 			.AddAttribute("RateHAI",
 				"Rate increment unit in hyperactive AI period",
-				DataRateValue(DataRate("50Mb/s")),
+				DataRateValue(DataRate("200Kb/s")),
 				MakeDataRateAccessor(&UdpSocketDcqcn::m_rhai),
 				MakeDataRateChecker())
   ;

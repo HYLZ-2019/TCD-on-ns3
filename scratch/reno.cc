@@ -50,7 +50,7 @@
 
 using namespace ns3;
 std::string dir = "results/";
-Time stopTime = Seconds (180);
+Time stopTime = Seconds (20);
 Time ColdStartBegin = Seconds (1);
 Time ColdStartEnd = Seconds (10);
 //Time EventstopTime = Seconds (200);
@@ -75,6 +75,8 @@ void InstallUdpServer(Ptr<Node> node, uint16_t port, Time stTime, Time ndTime)
 
 void InstallUdpClient(Ptr<Node> node, Address addr, uint16_t port, Time stTime, Time ndTime, Time interval, uint32_t MaxPacketSize, uint32_t maxPacketCount)
 {
+  std::cout << node << " " << addr << " " << port << " " << stTime.GetMilliSeconds() << " "<< ndTime.GetMilliSeconds() << " "
+            << interval.GetMicroSeconds() << " " <<MaxPacketSize << " " << maxPacketCount << "\n";
   UdpClientHelper client (addr, port);
   client.SetAttribute ("MaxPackets", UintegerValue (maxPacketCount));
   client.SetAttribute ("Interval", TimeValue (interval));
@@ -198,7 +200,7 @@ void buildNetwork(std::string filename) {
  * [server node number 2] [server port number 2]
  * ....
  * [number of clients]
- * [client node number 1] [channel number the server is on] [channel end the server is on] [server port number 1] [double interval (in seconds)] [uint32_t MaxPacketSize] [uint32_t maxPacketCount]
+ * [client node number 1] [channel number the server is on] [channel end the server is on] [server port number 1] [double interval (in seconds)] [uint32_t MaxPacketSize] [uint32_t maxPacketCount] [double start time of this flow] [double end time of this flow] [int isperiodic] [double period]
  * ....
  *  
  * About [channel & server]:
@@ -240,13 +242,21 @@ void installApps(std::string filename) {
   std::cin >> clientNum;
   for (int i=0; i<clientNum; i++){
     int clinode, servChannelSeq, servChannelEnd, servport;
-    double interval;
-    int maxsize, maxcnt;
-    std::cin >> clinode >> servChannelSeq >> servChannelEnd >> servport >> interval >> maxsize >> maxcnt;
-    InstallUdpClient(nodes.Get (clinode), IPAddresses [servChannelSeq].GetAddress (servChannelEnd), servport, ColdStartEnd, stopTime, MilliSeconds(interval), maxsize, maxcnt);
+    double interval, stTime, ndTime, period;
+    int maxsize, maxcnt, isperiodic;
+    std::cin >> clinode >> servChannelSeq >> servChannelEnd >> servport >> interval >> maxsize >> maxcnt >> stTime >> ndTime >> isperiodic >> period;
+    std::cout << interval << "!!!!!!!!!!!!!!!!!!!!!!\n";
+    stTime += ColdStartEnd.GetMilliSeconds();
+    ndTime += ColdStartEnd.GetMilliSeconds();
+    InstallUdpClient(nodes.Get (clinode), IPAddresses [servChannelSeq].GetAddress (servChannelEnd), servport, MilliSeconds(stTime), MilliSeconds(ndTime), NanoSeconds(interval * 1000), maxsize, maxcnt);
+    if (isperiodic) {
+      stTime += period, ndTime += period;
+      for (; MilliSeconds(stTime + period) < stopTime; stTime += period, ndTime += period) {
+        InstallUdpClient(nodes.Get (clinode), IPAddresses [servChannelSeq].GetAddress (servChannelEnd), servport, MilliSeconds(stTime), MilliSeconds(ndTime), NanoSeconds(interval * 1000), maxsize, maxcnt);
+      }
+    }
   }
 
-  std::cout << "??????????\n";
   return;
 }
 
