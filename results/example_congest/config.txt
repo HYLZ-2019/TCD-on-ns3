@@ -1,0 +1,2 @@
+qdiscTypeId ns3::LosslessQueueDisc
+stream  1
