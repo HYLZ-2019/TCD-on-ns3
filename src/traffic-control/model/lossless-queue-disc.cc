@@ -211,7 +211,7 @@ LosslessQueueDisc::DoDequeue (void)
   TcdState curTCD = getCurrentTCD();
   static int num = 0; ++num;
   if (GetCurrentSize() > QueueSize("0p")) {
-  std::cout <<"At Time <" << Simulator::Now ().GetSeconds () << ">, the {" << num << "}th of DoDequeue: packet=[" << pk<< "], "
+  std::cout <<"At Time <" << Simulator::Now ().GetMicroSeconds () << ">, the {" << num << "}th of DoDequeue: packet=[" << pk<< "], "
             << "current TCD state is " << curTCD << ", length of queue is " << GetCurrentSize() << ".";
   }
 

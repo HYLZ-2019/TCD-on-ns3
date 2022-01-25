@@ -1027,6 +1027,7 @@ QueueDisc::Restart (void)
   Ptr<Packet> p = item -> GetPacket();
   Time txTime = m_bps.CalculateBytesTxTime (p->GetSize ());
   Time txCompleteTime = txTime + m_tInterframeGap;
+  //std::cout << "packetSize = "<< p->GetSize ()<<", txTime=" <<txTime << ", m_tInterframeGap=" << m_tInterframeGap << std::endl;
   Simulator::Schedule (txCompleteTime, &QueueDisc::Restart, this);
 
   return Transmit (item);
