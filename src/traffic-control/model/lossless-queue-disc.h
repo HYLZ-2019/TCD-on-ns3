@@ -69,9 +69,9 @@ public:
    */
   int blockedCnt;
   
-  QueueSize qlenLowerBound = QueueSize("180p");
-  QueueSize qlenUpperBound = QueueSize("200p");
-  QueueSize tcdThreshold = QueueSize("150p");
+  QueueSize qlenLowerBound = QueueSize("45p");
+  QueueSize qlenUpperBound = QueueSize("150p");
+  QueueSize tcdThreshold = QueueSize("30p");
   Time max_t_on = Time("50ms");
   Time qsize_decrease_update_interval = Time("50ms");
 
