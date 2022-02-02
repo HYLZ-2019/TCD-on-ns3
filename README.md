@@ -1,3 +1,9 @@
+TCD-on-ns3
+============================
+This code is built on top of ns-3.35 to implement a lossless network and the TCD optimization of *Congestion detection in lossless networks*(SIGCOMM 2021).
+
+It is developed purely for a deadline-driven homework project. Code structure is terrible, usage is difficult and no clear documentation is provided. Please take this repository as a warning to start your homework early.
+
 
 The Network Simulator, Version 3
 ================================
